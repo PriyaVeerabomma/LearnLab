@@ -11,3 +11,105 @@ The user journey begins with uploading or selecting a PDF, which they can explor
 - **Codelabs Documentation**: [Link to Codelabs](https://codelabs-preview.appspot.com/?file_id=1kMzJ_qRJrDknPFatF1raPvsoJUatl_-tfJuICo7p4EM#0)
 - **Project Submission Video (5 Minutes)**: [Link to Submission Video](https://drive.google.com/drive/u/0/folders/1wgYeUY-HsDuWcqGq1hSNVRQ3gvQBMLZC)
 
+
+## User Flow Diagram
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Login Screen]
+    B --> C{Authentication}
+    C -->|Success| D[Dashboard]
+    C -->|Failure| B
+    
+    D --> E{New or Existing Resource}
+    
+    E -->|Upload New| F[Upload PDF Resource]
+    F --> G[Processing Document]
+    G --> H{Select Learning Mode}
+    
+    E -->|Pick Existing| H
+    
+    H -->|Option 1| I[Podcast Generation]
+    I --> I1[Generate Audio]
+    I1 --> I2[Listen & Learn]
+    I2 --> M[Learning Metrics]
+    
+    H -->|Option 2| J[Flashcard Mode]
+    J --> J1[View Cards]
+    J1 --> J2[Practice Cards]
+    J2 --> M
+    
+    H -->|Option 3| K[Quiz Mode]
+    K --> K1[Take Quiz]
+    K1 --> K2[Review Answers]
+    K2 --> M
+    
+    M --> N{Continue Learning?}
+    N -->|Yes| H
+    N -->|No| O{Share Progress?}
+    
+    O -->|Yes| P[Generate Content]
+    P --> P1[Blog Post]
+    P --> P2[Social Media Post]
+    O -->|No| Q[Exit]
+    P1 --> Q
+    P2 --> Q
+```
+
+## Sequence Diagram Example
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant AI
+    
+    User->>App: Login
+    App->>User: Authentication Success
+    User->>App: Upload PDF
+    App->>AI: Process Document
+    AI->>App: Return Analysis
+    App->>User: Show Learning Options
+    User->>App: Select Learning Mode
+    App->>User: Present Content
+```
+
+## State Diagram Example
+
+```mermaid
+stateDiagram-v2
+    [*] --> LoginScreen
+    LoginScreen --> Dashboard: Success
+    Dashboard --> ResourceSelection
+    
+    state ResourceSelection {
+        [*] --> Choose
+        Choose --> UploadNew: New
+        Choose --> ExistingResource: Existing
+    }
+    
+    ResourceSelection --> LearningMode
+    LearningMode --> Metrics
+    Metrics --> [*]
+```
+
+## Class Diagram Example
+
+```mermaid
+classDiagram
+    User --|> Authentication
+    User --|> Learning
+    
+    class User{
+      +String username
+      +String email
+      +login()
+      +logout()
+    }
+    
+    class Learning{
+      +selectMode()
+      +trackProgress()
+      +generateMetrics()
+    }
+```
