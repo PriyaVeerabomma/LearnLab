@@ -56,3 +56,49 @@ flowchart TD
     P2 --> Q
 ```
 
+## Architecture Diagram
+```mermaid
+graph LR
+    subgraph Step1["Step 1: PDF Pre-processing"]
+        direction TB
+        A[RAW PDF] -->|Input| B[Intelligent Agentic System]
+        B -->|Processed| C[Clean Text]
+        D[System Prompt: \Create PDF while preserving context\] -.-> B
+    end
+
+    subgraph Step2["Step 2: Write Podcast"]
+        direction TB
+        C -->|Input| E[Intelligent Agentic System]
+        E -->|Processed| F[Podcast Script]
+        G[System Prompt: \Make this a podcast transcript\] -.-> E
+    end
+
+    subgraph Step3["Step 3: Dramatise Podcast"]
+        direction TB
+        F -->|Input| H[Intelligent Agentic System]
+        H -->|Processed| I[Crispy Podcast]
+        J[System Prompt: \Make this podcast more dramatic\] -.-> H
+    end
+
+    subgraph Step2b["Step 2: Generate Flashcard"]
+        direction TB
+        C -->|Input| K[Intelligent Agentic System]
+        K -->|Processed| L[Flashcard Content]
+        M[System Prompt: \Generate a set of questions/answers for flashcard\] -.-> K
+    end
+
+    subgraph Step2c["Step 2: Generate Quiz"]
+        direction TB
+        C -->|Input| N[Intelligent Agentic System]
+        N -->|Processed| O[Quiz Content]
+        P[System Prompt: \Generate a set of questions/answers for quiz\] -.-> N
+    end
+
+    subgraph Step4["Step 4: Generate Audio"]
+        direction LR
+        I -->|Input| Q[TTS Intelligent Agentic System]
+        I -->|Input| R[bark/suno]
+        Q -->|Audio| S[Podcast.mp3]
+        R -->|Audio| S
+    end
+```
