@@ -58,7 +58,7 @@ flowchart TD
 
 ## Architecture Diagram
 ```mermaid
-graph LR
+graph TD
     subgraph Step1["Step 1: PDF Pre-processing"]
         direction TB
         A[RAW PDF] -->|Input| B[Intelligent Agentic System]
