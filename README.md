@@ -1,4 +1,4 @@
-# MultiLearnAI
+# LearnLab
 
 ## Overview
 In today's digital learning landscape, there's a growing need for tools that can transform static PDF documents into diverse, interactive learning materials. Currently, learners often struggle to effectively extract, retain, and engage with information from PDF documents, leading to suboptimal learning outcomes.
