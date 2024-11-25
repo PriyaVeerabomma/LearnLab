@@ -1,19 +1,87 @@
-# LearnLab
+# LearnLab 🎓
 
-## Overview
-In today's digital learning landscape, there's a growing need for tools that can transform static PDF documents into diverse, interactive learning materials. Currently, learners often struggle to effectively extract, retain, and engage with information from PDF documents, leading to suboptimal learning outcomes.
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.68.0+-00a393.svg)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-13.0+-black.svg)](https://nextjs.org/)
+[![Docker](https://img.shields.io/badge/Docker-20.10.8+-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation](https://img.shields.io/badge/docs-Codelabs-blue.svg)](https://codelabs-preview.appspot.com/?file_id=1kMzJ_qRJrDknPFatF1raPvsoJUatl_-tfJuICo7p4EM#0)
 
-To develop an intelligent platform that transforms PDF documents into multiple learning formats (audio podcasts, flashcards, quizzes) while automatically generating and distributing content, enabling comprehensive understanding and retention of material through various learning modalities.
+> Enhancing Learning with Fun, Interactive Journeys for Better Comprehension, Revision, and Evaluation.
 
-The user journey begins with uploading or selecting a PDF, which they can explore using querying and summarization features. Users can then generate an audio podcast to conveniently listen to the document's insights or create flashcards for revision. After engaging with the flashcards, users can take an interactive quiz to test their understanding of the material. Once satisfied, they can use the blog generator to produce a professional article summarizing the document's key points. If the generated blog meets their expectations, they can seamlessly post it to blog and social media post sharing their learning with a broader audience.
+## 🌟 Quick Links
 
-- **GitHub Issues and Tasks**: [Link to GitHub Project Issues](https://github.com/orgs/DAMG7245-Big-Data-Sys-SEC-02-Fall24/projects/7/views/1)
-- **Codelabs Documentation**: [Link to Codelabs](https://codelabs-preview.appspot.com/?file_id=1kMzJ_qRJrDknPFatF1raPvsoJUatl_-tfJuICo7p4EM#0) (Updated the changes in methodology section, updated project name and suitable tag line)
-- **Project Submission Video (5 Minutes)**: [Link to Submission Video](https://drive.google.com/drive/u/0/folders/1wgYeUY-HsDuWcqGq1hSNVRQ3gvQBMLZC)
+- [GitHub Issues and Tasks](https://github.com/orgs/DAMG7245-Big-Data-Sys-SEC-02-Fall24/projects/7/views/1)
+- [Codelabs Documentation](https://codelabs-preview.appspot.com/?file_id=1kMzJ_qRJrDknPFatF1raPvsoJUatl_-tfJuICo7p4EM#0)
+- [Project Submission Video](https://drive.google.com/drive/u/0/folders/1wgYeUY-HsDuWcqGq1hSNVRQ3gvQBMLZC)
 
+## 👥 Team
 
-## User Flow Diagram
+- Sai Surya Madhav Rebbapragada
+- Uday Kiran Dasari (Project Manager)
+- Venkat Akash Varun Pemmaraju
 
+## 🎯 Overview
+
+In today's digital learning landscape, there's a growing need for tools that can transform static PDF documents into diverse, interactive learning materials. LearnLab addresses this challenge by providing an intelligent platform that converts PDFs into multiple engaging formats, including audio podcasts, flashcards, and quizzes.
+
+## 🚀 Features
+
+- **📱 Interactive Dashboard**
+  - User authentication
+  - PDF upload and management
+  - Learning progress tracking
+
+- **🎧 Podcast Generation**
+  - Automated conversion of academic content
+  - Engaging audio narratives
+  - Text-to-speech optimization
+
+- **📝 Flashcards**
+  - AI-powered concept extraction
+  - Spaced repetition system
+  - Customizable difficulty levels
+
+- **📊 Interactive Quizzes**
+  - Dynamic question generation
+  - Real-time feedback
+  - Performance analytics
+
+- **📝 Content Transformation**
+  - Blog post generation
+  - Social media integration
+  - Citation management
+
+## 🛠️ Technology Stack
+
+### Backend
+- ![Python](https://img.shields.io/badge/Python-FFD43B?style=flat&logo=python&logoColor=blue)
+- ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)
+- ![JWT](https://img.shields.io/badge/JWT-black?style=flat&logo=JSON%20web%20tokens)
+- ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)
+
+### Frontend
+- ![Next.js](https://img.shields.io/badge/Next.js-black?style=flat&logo=next.js&logoColor=white)
+- ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white)
+- ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
+
+### AI/ML
+- ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)
+- LangChain
+- LlamaIndex
+- Docling
+
+### Cloud & DevOps
+- ![GCP](https://img.shields.io/badge/Google_Cloud-4285F4?style=flat&logo=google-cloud&logoColor=white)
+- ![AWS](https://img.shields.io/badge/AWS-232F3E?style=flat&logo=amazon-aws&logoColor=white)
+- ![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=flat&logo=docker&logoColor=white)
+- ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat&logo=github-actions&logoColor=white)
+- ![Apache Airflow](https://img.shields.io/badge/Apache_Airflow-017CEE?style=flat&logo=Apache%20Airflow&logoColor=white)
+
+## 🏗️ Architecture
+
+### User Flow
 ```mermaid
 flowchart TD
     A[Start] --> B[Login Screen]
@@ -56,49 +124,65 @@ flowchart TD
     P2 --> Q
 ```
 
-## Architecture Diagram
-```mermaid
-graph TD
-    subgraph Step1["Step 1: PDF Pre-processing"]
-        direction TB
-        A[RAW PDF] -->|Input| B[Intelligent Agentic System]
-        B -->|Processed| C[Clean Text]
-        D[System Prompt: \Create PDF while preserving context\] -.-> B
-    end
+## 📋 Project Timeline
 
-    subgraph Step2["Step 2: Write Podcast"]
-        direction TB
-        C -->|Input| E[Intelligent Agentic System]
-        E -->|Processed| F[Podcast Script]
-        G[System Prompt: \Make this a podcast transcript\] -.-> E
-    end
+- **Phase 1** (Nov 24 - Nov 28): Project setup and infrastructure
+- **Phase 2** (Nov 29 - Dec 3): Core feature development
+- **Phase 3** (Dec 4 - Dec 8): Integration and testing
+- **Phase 4** (Dec 9 - Dec 12): Optimization and refinement
+- **Phase 5** (Dec 13 - Dec 14): Final deployment and documentation
 
-    subgraph Step3["Step 3: Dramatise Podcast"]
-        direction TB
-        F -->|Input| H[Intelligent Agentic System]
-        H -->|Processed| I[Crispy Podcast]
-        J[System Prompt: \Make this podcast more dramatic\] -.-> H
-    end
+## 🚀 Getting Started
 
-    subgraph Step2b["Step 2: Generate Flashcard"]
-        direction TB
-        C -->|Input| K[Intelligent Agentic System]
-        K -->|Processed| L[Flashcard Content]
-        M[System Prompt: \Generate a set of questions/answers for flashcard\] -.-> K
-    end
+### Prerequisites
+- Python 3.9+
+- Node.js 16+
+- Docker
+- GCP Account
+- AWS Account
 
-    subgraph Step2c["Step 2: Generate Quiz"]
-        direction TB
-        C -->|Input| N[Intelligent Agentic System]
-        N -->|Processed| O[Quiz Content]
-        P[System Prompt: \Generate a set of questions/answers for quiz\] -.-> N
-    end
+### Installation
 
-    subgraph Step4["Step 4: Generate Audio"]
-        direction LR
-        I -->|Input| Q[TTS Intelligent Agentic System]
-        I -->|Input| R[bark/suno]
-        Q -->|Audio| S[Podcast.mp3]
-        R -->|Audio| S
-    end
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/learnlab.git
+cd learnlab
 ```
+
+2. Install dependencies:
+```bash
+# Backend
+pip install -r requirements.txt
+
+# Frontend
+cd frontend
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+4. Run the application:
+```bash
+# Backend
+uvicorn app.main:app --reload
+
+# Frontend
+npm run dev
+```
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 References
+
+- [OpenNotebookLM](https://github.com/gabrielchua/open-notebooklm)
+- [Bark](https://github.com/suno-ai/bark)
+- [Llama Recipes](https://github.com/meta-llama/llama-recipes)
+- [EduChain](https://github.com/satvik314/educhain)
+- [Consillium App](https://www.consillium.app/)
+- [Median](https://github.com/5uru/Median)
