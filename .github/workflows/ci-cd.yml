@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # Python Setup
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    # Backend Tests
+    - name: Install Backend Dependencies
+      run: |
+        cd backend
+        poetry install
+
+    - name: Run Backend Tests
+      run: |
+        cd backend
+        poetry run pytest
+
+    # Frontend Setup
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # Frontend Tests
+    - name: Install Frontend Dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Run Frontend Tests
+      run: |
+        cd frontend
+        npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+
+    - name: Build and Push Docker images
+      run: |
+        gcloud auth configure-docker
+        docker-compose build
+        docker-compose push
+
+    - name: Deploy to GCP
+      run: |
+        gcloud run deploy learnlab-frontend --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:latest --region us-central1 --platform managed
+        gcloud run deploy learnlab-backend --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:latest --region us-central1 --platform managed
+        gcloud run deploy learnlab-streamlit --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/streamlit:latest --region us-central1 --platform managed
