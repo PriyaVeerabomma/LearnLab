@@ -1,5 +1,5 @@
 # Development Stage
-FROM python:3.9.6-slim AS development
+FROM python:3.12 AS development
 
 WORKDIR /app
 
