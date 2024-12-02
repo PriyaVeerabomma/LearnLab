@@ -45,3 +45,9 @@ docker-compose.override.yml
 # Poetry
 dist/
 *.egg-info/
+
+
+# Backend
+backend/logs*
+backend/logs/*
+backend/logs/2024-12-01_app.log

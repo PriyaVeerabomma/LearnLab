@@ -1,5 +1,6 @@
 from sqlalchemy import Boolean, Column, String, DateTime
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 import uuid
 from ..core.database import Base
 from datetime import datetime
@@ -16,3 +17,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     last_login = Column(DateTime, nullable=True)
+    
+    files = relationship("File", back_populates="user", cascade="all, delete-orphan")
+    decks = relationship("FlashcardDeck", back_populates="user", cascade="all, delete-orphan")
+    learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")

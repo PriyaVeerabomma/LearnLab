@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, DateTime, BigInteger, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 import uuid
 from ..core.database import Base
 from datetime import datetime
@@ -16,3 +17,7 @@ class File(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_deleted = Column(Boolean, default=False)
+
+    # Relationships
+    user = relationship("User", back_populates="files")
+    deck = relationship("FlashcardDeck", back_populates="file", uselist=False)  # one-to-one relationship

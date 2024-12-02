@@ -2,22 +2,12 @@ from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import SessionLocal
+from app.models.user import User
 
-# Create database engine
-engine = create_engine(settings.DATABASE_URL)
-
-# Create sessionmaker
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create base class for models
-Base = declarative_base()
-
-# OAuth2 scheme for token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/auth/login")
 
 def get_db() -> Generator:
@@ -33,12 +23,10 @@ def get_db() -> Generator:
 async def get_current_user(
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme)
-) -> "User":  
+) -> User:
     """
     Get current user from JWT token
     """
-    from app.models.user import User 
-    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -62,8 +50,8 @@ async def get_current_user(
     return user
 
 async def get_current_active_user(
-    current_user: "User" = Depends(get_current_user), 
-) -> "User":
+    current_user: User = Depends(get_current_user),
+) -> User:
     """
     Get current active user
     """
@@ -72,8 +60,8 @@ async def get_current_active_user(
     return current_user
 
 async def get_current_superuser(
-    current_user: "User" = Depends(get_current_user), 
-) -> "User":
+    current_user: User = Depends(get_current_user),
+) -> User:
     """
     Get current superuser
     """
@@ -83,12 +71,3 @@ async def get_current_superuser(
             detail="The user doesn't have enough privileges"
         )
     return current_user
-
-__all__ = [
-    "Base",
-    "SessionLocal",
-    "get_db",
-    "get_current_user",
-    "get_current_active_user",
-    "get_current_superuser"
-]

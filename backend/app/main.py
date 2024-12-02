@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.v1 import auth, files
+from .api.v1 import auth, files, flashcards
 from .core.config import settings
 from .core.database import engine, Base
 
@@ -31,8 +31,14 @@ app.include_router(
 
 app.include_router(
     files.router,
-    prefix="/api",
+    prefix="/api/files",
     tags=["Files"]
+)
+
+app.include_router(
+    flashcards.router,
+    prefix="/api/flashcards",
+    tags=["Flashcards"]
 )
 
 @app.get("/")
