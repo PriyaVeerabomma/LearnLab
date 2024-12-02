@@ -82,8 +82,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+    # TODO: Add usename and password
+      - POSTGRES_USER=
+      - POSTGRES_PASSWORD=
     networks:
       - learnlab-network
     healthcheck:
