@@ -1,13 +1,15 @@
 from typing import Protocol, Optional, Dict
 import boto3
-from botocore.config import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import BotoCoreError, ClientError
 import logging
 from fastapi import HTTPException
+import time
+from uuid import UUID
 
 from app.core.config import settings
+from app.core.logger import setup_logger, log_error
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class IS3Service(Protocol):
     async def upload_file(
@@ -36,31 +38,24 @@ class IS3Service(Protocol):
         s3_key: str
     ) -> bool:
         pass
-    
-    async def copy_file(
-        self,
-        source_key: str,
-        dest_key: str
-    ) -> bool:
-        pass
 
 class S3Service:
     def __init__(self):
-        self.config = Config(
-            retries=dict(
-                max_attempts=3
+        try:
+            self.s3_client = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_REGION
             )
-        )
-        
-        self.s3_client = boto3.client(
-            's3',
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_REGION,
-            config=self.config
-        )
-        
-        self.bucket_name = settings.S3_BUCKET_NAME
+            self.bucket_name = settings.AWS_BUCKET_NAME
+            logger.info(f"Initialized S3 service with bucket: {self.bucket_name}")
+        except Exception as e:
+            log_error(logger, e, {'message': 'Failed to initialize S3 service'})
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to initialize S3 service"
+            )
 
     async def upload_file(
         self,
@@ -68,6 +63,8 @@ class S3Service:
         s3_key: str
     ) -> bool:
         """Upload a file to S3"""
+        start_time = time.time()
+        logger.info(f"Starting file upload. Path: {file_path}, Key: {s3_key}")
         
         try:
             extra_args = {}
@@ -87,16 +84,35 @@ class S3Service:
             })
 
             # Upload file
-            self.s3_client.upload_file(
-                file_path,
-                self.bucket_name,
-                s3_key,
-                ExtraArgs=extra_args
-            )
+            with open(file_path, 'rb') as file_obj:
+                self.s3_client.upload_fileobj(
+                    file_obj,
+                    self.bucket_name,
+                    s3_key,
+                    ExtraArgs=extra_args
+                )
+
+            elapsed_time = time.time() - start_time
+            logger.info(f"File upload successful. Time taken: {elapsed_time:.2f}s")
             return True
 
         except ClientError as e:
-            logger.error(f"Error uploading file to S3: {str(e)}")
+            log_error(logger, e, {
+                'file_path': file_path,
+                's3_key': s3_key,
+                'operation': 'upload',
+                'error_code': e.response['Error']['Code']
+            })
+            raise HTTPException(
+                status_code=500,
+                detail=f"AWS S3 error: {e.response['Error']['Message']}"
+            )
+        except Exception as e:
+            log_error(logger, e, {
+                'file_path': file_path,
+                's3_key': s3_key,
+                'operation': 'upload'
+            })
             raise HTTPException(
                 status_code=500,
                 detail="Failed to upload file to storage"
@@ -109,6 +125,7 @@ class S3Service:
         query_params: Optional[Dict[str, str]] = None
     ) -> str:
         """Generate a presigned URL for accessing an S3 object"""
+        logger.debug(f"Generating presigned URL for key: {s3_key}")
         
         try:
             params = {
@@ -125,10 +142,24 @@ class S3Service:
                 Params=params,
                 ExpiresIn=expiry_seconds
             )
+            logger.debug(f"Generated presigned URL with expiry: {expiry_seconds}s")
             return url
 
         except ClientError as e:
-            logger.error(f"Error generating presigned URL: {str(e)}")
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'generate_url',
+                'error_code': e.response['Error']['Code']
+            })
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate download URL: {e.response['Error']['Message']}"
+            )
+        except Exception as e:
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'generate_url'
+            })
             raise HTTPException(
                 status_code=500,
                 detail="Failed to generate access URL"
@@ -136,16 +167,31 @@ class S3Service:
 
     async def delete_file(self, s3_key: str) -> bool:
         """Delete a file from S3"""
+        logger.info(f"Attempting to delete file with key: {s3_key}")
         
         try:
             self.s3_client.delete_object(
                 Bucket=self.bucket_name,
                 Key=s3_key
             )
+            logger.info(f"Successfully deleted file: {s3_key}")
             return True
 
         except ClientError as e:
-            logger.error(f"Error deleting file from S3: {str(e)}")
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'delete',
+                'error_code': e.response['Error']['Code']
+            })
+            raise HTTPException(
+                status_code=500,
+                detail=f"AWS S3 error: {e.response['Error']['Message']}"
+            )
+        except Exception as e:
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'delete'
+            })
             raise HTTPException(
                 status_code=500,
                 detail="Failed to delete file from storage"
@@ -153,6 +199,7 @@ class S3Service:
 
     async def check_file_exists(self, s3_key: str) -> bool:
         """Check if a file exists in S3"""
+        logger.debug(f"Checking existence of file: {s3_key}")
         
         try:
             self.s3_client.head_object(
@@ -164,35 +211,12 @@ class S3Service:
         except ClientError as e:
             if e.response['Error']['Code'] == '404':
                 return False
-            logger.error(f"Error checking file in S3: {str(e)}")
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'check_exists',
+                'error_code': e.response['Error']['Code']
+            })
             raise HTTPException(
                 status_code=500,
                 detail="Failed to check file existence"
-            )
-
-    async def copy_file(
-        self,
-        source_key: str,
-        dest_key: str
-    ) -> bool:
-        """Copy a file within S3"""
-        
-        try:
-            copy_source = {
-                'Bucket': self.bucket_name,
-                'Key': source_key
-            }
-            
-            self.s3_client.copy_object(
-                CopySource=copy_source,
-                Bucket=self.bucket_name,
-                Key=dest_key
-            )
-            return True
-
-        except ClientError as e:
-            logger.error(f"Error copying file in S3: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to copy file"
             )

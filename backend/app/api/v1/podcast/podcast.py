@@ -33,8 +33,7 @@ async def create_podcast(
     audio_service: AudioService = Depends(deps.get_audio_service),
     transcript_service: TranscriptService = Depends(deps.get_transcript_service)
 ):
-    """Create a new podcast with audio and transcript"""
-    
+    """Create a new podcast with audio and transcript"""    
     # Process audio file
     s3_audio_key, duration = await audio_service.upload_podcast(
         audio_file, 
