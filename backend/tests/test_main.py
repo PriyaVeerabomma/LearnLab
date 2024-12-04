@@ -1,12 +1,25 @@
-import os
+import sys
 from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-# Import app with mocked database
-with patch('sqlalchemy.create_engine'):
-    with patch('sqlalchemy.orm.declarative_base.metadata.create_all'):
-        from app.main import app
+# Create mock patches
+mock_patches = {
+    'app.core.database.Base': patch('app.core.database.Base.metadata.create_all'),
+    'app.core.database.engine': patch('app.core.database.engine'),
+    'app.core.database.SessionLocal': patch('app.core.database.SessionLocal')
+}
+
+# Apply all patches
+for mock in mock_patches.values():
+    mock.start()
+
+# Import app after patches are applied
+from app.main import app
+
+# Stop all patches after import
+for mock in mock_patches.values():
+    mock.stop()
 
 client = TestClient(app)
 
