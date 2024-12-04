@@ -49,6 +49,7 @@ RUN apt-get update && \
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PORT=8000
+ENV PYTHONPATH=/app
 
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     cd /usr/local/bin && \
