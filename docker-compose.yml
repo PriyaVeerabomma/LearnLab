@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+
   frontend:
     build:
       context: ./frontend
@@ -21,16 +22,15 @@ services:
       - learnlab-network
     
 
-
   backend:
     build:
       context: ./backend
       target: development
     ports:
       - "8000:8000"
-    # volumes:
-    #   - ./backend:/app
-    #   - /app/.venv  # Don't mount virtual environment
+    volumes:
+      - ./backend:/app
+      - /app/.venv  # Don't mount virtual environment
     env_file:
       - ./.env
     environment:
@@ -58,32 +58,6 @@ services:
       backend
     networks:
       - learnlab-network
-    
-  # airflow:
-  #   build:
-  #     context: ./airflow
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - ./airflow/dags:/opt/airflow/dags
-  #     - ./airflow/logs:/opt/airflow/logs
-  #     - ./airflow/plugins:/opt/airflow/plugins
-  #   environment:
-  #     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@db:5432/airflow
-  #     - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-  #     - AIRFLOW__CORE__LOAD_EXAMPLES=False
-  #     - AIRFLOW__CORE__ENABLE_XCOM_PICKLING=True
-  #     - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   networks:
-  #     - learnlab-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
 
 volumes:
   postgres_data:

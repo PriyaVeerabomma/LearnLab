@@ -71,3 +71,36 @@ async def get_current_superuser(
             detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+from app.services.podcast_service import (
+    AudioService,
+    TranscriptService,
+    ProgressService,
+    AnalyticsService,
+    S3Service
+)
+
+def get_s3_service() -> S3Service:
+    """Get S3 service instance"""
+    return S3Service()
+
+def get_audio_service(
+    s3_service: S3Service = Depends(get_s3_service)
+) -> AudioService:
+    """Get audio service instance with S3 dependency"""
+    return AudioService(s3_service)
+
+def get_transcript_service(
+    s3_service: S3Service = Depends(get_s3_service)
+) -> TranscriptService:
+    """Get transcript service instance with S3 dependency"""
+    return TranscriptService(s3_service)
+
+def get_progress_service() -> ProgressService:
+    """Get progress service instance"""
+    return ProgressService()
+
+def get_analytics_service() -> AnalyticsService:
+    """Get analytics service instance"""
+    return AnalyticsService()
