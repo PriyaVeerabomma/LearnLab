@@ -1,9 +1,12 @@
 from typing import Any, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
+DATABASE_URL=os.getenv("DATABASE_URL")
 class Settings(BaseSettings):
     # Database Configuration
-    DATABASE_URL: str = "postgresql://postgres:postgres@db:5432/learnlab"
+    DATABASE_URL: str 
 
     # JWT Configuration
     JWT_SECRET_KEY: str
