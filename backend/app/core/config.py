@@ -1,6 +1,9 @@
 from typing import Any, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
+DATABASE_URL=os.getenv("DATABASE_URL")
 class Settings(BaseSettings):
     # Database Configuration
     DATABASE_URL: str 
