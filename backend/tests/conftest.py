@@ -1,6 +1,8 @@
 import os
 import sys
+import pytest
 from pathlib import Path
+from unittest.mock import patch
 
 # Add the parent directory to PYTHONPATH
 root_dir = Path(__file__).parent.parent
@@ -19,3 +21,11 @@ os.environ.update({
     "DEBUG": "True",
     "ENVIRONMENT": "test"
 })
+
+@pytest.fixture(autouse=True)
+def mock_db():
+    """Mock database operations"""
+    with patch('sqlalchemy.create_engine'):
+        with patch('sqlalchemy.orm.declarative_base'):
+            with patch('sqlalchemy.orm.sessionmaker'):
+                yield
