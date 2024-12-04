@@ -1,101 +1,133 @@
-import Image from "next/image";
+'use client';
+
+import { Button } from "@/components/ui/button"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Heart, ArrowRight, Upload, Sparkles, BookOpen, Share2 } from "lucide-react"
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const router = useRouter();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const handleGetStarted = () => {
+    router.push('/auth');
+  };
+
+  return (
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-[#87CEEB] to-[#ACE1AF] py-20">
+        <div className="container mx-auto text-center space-y-6 px-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#003366] max-w-4xl mx-auto">
+            Transform PDFs into Interactive Learning Experiences
+          </h1>
+          <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto">
+            Make learning engaging with audio podcasts, flashcards, quizzes, and more.
+          </p>
+          <Button 
+            variant="default" 
+            size="lg" 
+            className="mt-8"
+            onClick={handleGetStarted}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Get Started <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-[#003366] mb-12">
+            Why Choose LearnLab?
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="border-2">
+                <CardHeader>
+                  <div className="flex justify-center mb-4">
+                    <feature.icon className="h-12 w-12 text-[#87CEEB]" />
+                  </div>
+                  <CardTitle className="text-xl text-center text-[#003366]">{feature.title}</CardTitle>
+                  <CardDescription className="text-center text-gray-600">
+                    {feature.description}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-[#87CEEB] mb-12">
+            Seamless Learning in 4 Simple Steps
+          </h2>
+          <div className="grid md:grid-cols-4 gap-8">
+            {steps.map((step, index) => (
+              <div key={index} className="relative">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="h-16 w-16 rounded-full bg-[#87CEEB] flex items-center justify-center text-white text-xl font-bold">
+                    {index + 1}
+                  </div>
+                  <step.icon className="h-8 w-8 text-[#003366]" />
+                  <p className="font-medium text-gray-800">{step.description}</p>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className="hidden md:block absolute top-1/4 left-1/2 w-full h-0.5 bg-[#87CEEB]" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#1C1C1C] text-white py-6">
+        <div className="container mx-auto px-4 text-center">
+          <p className="flex items-center justify-center gap-2">
+            Made with <Heart className="h-5 w-5 text-red-500 fill-current" /> by LearnLab scientists
+          </p>
+        </div>
       </footer>
-    </div>
-  );
+    </main>
+  )
 }
+
+const features = [
+  {
+    icon: BookOpen,
+    title: "Learn on the Go",
+    description: "Convert PDFs into engaging audio podcasts for effortless learning.",
+  },
+  {
+    icon: Sparkles,
+    title: "Revise with Confidence",
+    description: "Key concepts at your fingertips through AI-powered flashcards.",
+  },
+  {
+    icon: BookOpen,
+    title: "Test Your Knowledge",
+    description: "Challenge yourself with AI-driven quizzes and instant feedback.",
+  },
+]
+
+const steps = [
+  {
+    icon: Upload,
+    description: "Start by choosing the material you want to learn.",
+  },
+  {
+    icon: Sparkles,
+    description: "Generate flashcards, audio, quizzes, and more.",
+  },
+  {
+    icon: BookOpen,
+    description: "Revise, test, and understand key concepts.",
+  },
+  {
+    icon: Share2,
+    description: "Create and post professional blogs instantly.",
+  },
+]
