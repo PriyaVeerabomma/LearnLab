@@ -1,17 +1,14 @@
+import os
 from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
 
-# Create test client
+# Import app with mocked database
+with patch('sqlalchemy.create_engine'):
+    with patch('sqlalchemy.orm.declarative_base.metadata.create_all'):
+        from app.main import app
+
 client = TestClient(app)
-
-@pytest.fixture(autouse=True)
-def mock_dependencies():
-    """Mock any external dependencies"""
-    with patch('app.main.Base.metadata.create_all'):
-        with patch('app.core.config.settings.check_aws_credentials'):
-            yield
 
 def test_read_health():
     """Test health check endpoint"""

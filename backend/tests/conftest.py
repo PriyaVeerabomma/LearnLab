@@ -16,7 +16,6 @@ os.environ.update({
     "AWS_SECRET_ACCESS_KEY": "test_aws_secret",
     "AWS_BUCKET_NAME": "test_bucket",
     "AWS_REGION": "us-east-1",
-    "DATABASE_URL": "postgresql://postgres:postgres@34.57.145.110:5432/learnlab",
     "DEBUG": "True",
     "ENVIRONMENT": "test"
 })
