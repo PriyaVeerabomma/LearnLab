@@ -1,0 +1,270 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-cicd.yml'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        
+      - name: Install dependencies
+        run: poetry install
+        
+      - name: Run tests
+        run: |
+          poetry run pytest tests/
+
+  build-and-push:
+    name: Build and Push Docker Image
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/learnlab-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/learnlab-backend:${{ github.sha }}
+
+  deploy:
+    name: Deploy to GCP
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Create SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp_key
+          chmod 600 ~/.ssh/gcp_key
+
+      - name: Pre-deployment Checks
+        run: |
+          # Check VM connectivity
+          ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no udaykiran@34.57.145.110 'echo "VM connection successful"'
+          
+          # Check and Install Docker if not present
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            if ! command -v docker &> /dev/null; then
+              echo "Docker not found. Installing Docker for ARM64..."
+              
+              # Update package lists
+              sudo apt-get update
+              
+              # Install required packages
+              sudo apt-get install -y \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                gnupg \
+                lsb-release
+              
+              # Add Docker'"'"'s official GPG key
+              sudo mkdir -p /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              
+              # Set up Docker repository for ARM64
+              echo \
+                "deb [arch=arm64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              
+              # Install Docker Engine
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+              
+              # Add current user to docker group
+              sudo usermod -aG docker $USER
+              
+              # Install Docker Compose v2
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-aarch64" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              
+              echo "Docker and Docker Compose installed successfully"
+              
+              # Verify installations
+              docker --version
+              docker-compose --version
+            else
+              echo "Docker is already installed"
+            fi
+          '
+          
+          # Check Docker service
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            if ! systemctl is-active --quiet docker; then
+              echo "Docker service is not running. Starting Docker service..."
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            fi
+          '
+          
+          # Check disk space
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            SPACE=$(df -h / | awk '"'"'NR==2 {print $5}'"'"' | sed '"'"'s/%//'"'"')
+            if [ "$SPACE" -gt 90 ]; then
+              echo "Warning: Disk space usage is at $SPACE%"
+              exit 1
+            fi
+          '
+          
+          # Check memory usage
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            MEM=$(free | awk '"'"'/Mem:/ { printf("%.0f\n", $3/$2 * 100) }'"'"')
+            if [ "$MEM" -gt 90 ]; then
+              echo "Warning: Memory usage is at $MEM%"
+              exit 1
+            fi
+          '
+
+      - name: Backup Current State
+        run: |
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            cd ~/learnlab
+            if [ -f "docker-compose.prod.yml" ]; then
+              cp docker-compose.prod.yml docker-compose.prod.yml.backup
+              docker-compose -f docker-compose.prod.yml ps > containers.backup
+            fi
+          '
+          
+      - name: Deploy to GCP
+        run: |
+          # Copy updated docker-compose file
+          scp -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no docker-compose.prod.yml udaykiran@34.57.145.110:~/learnlab/
+          
+          # Copy environment file
+          echo "${{ secrets.ENV_FILE }}" | ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 'cat > ~/learnlab/.env'
+          
+          # Deploy services
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            cd ~/learnlab && 
+            docker-compose -f docker-compose.prod.yml pull &&
+            docker-compose -f docker-compose.prod.yml up -d
+          '
+
+      - name: Post-deployment Health Checks
+        run: |
+          # Wait for services to initialize
+          sleep 30
+          
+          # Check if containers are running
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            cd ~/learnlab
+            if ! docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+              echo "Error: Containers failed to start"
+              docker-compose -f docker-compose.prod.yml logs
+              exit 1
+            fi
+          '
+          
+          # Check backend service health
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            ATTEMPTS=0
+            MAX_ATTEMPTS=5
+            
+            while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+              HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health || echo "failed")
+              
+              if [ "$HEALTH_CHECK" = "200" ]; then
+                echo "Backend health check passed"
+                break
+              fi
+              
+              ATTEMPTS=$((ATTEMPTS + 1))
+              if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+                echo "Backend health check failed after $MAX_ATTEMPTS attempts"
+                exit 1
+              fi
+              
+              echo "Retrying health check in 10 seconds..."
+              sleep 10
+            done
+          '
+          
+          # Check Database Connection
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            cd ~/learnlab
+            if ! docker-compose -f docker-compose.prod.yml exec -T backend python -c "
+              import os
+              import psycopg2
+              conn = psycopg2.connect(os.getenv('"'"'DATABASE_URL'"'"'))
+              conn.close()
+            "; then
+              echo "Database connection check failed"
+              exit 1
+            fi
+          '
+
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            cd ~/learnlab
+            
+            # Store logs before rollback
+            docker-compose -f docker-compose.prod.yml logs > deployment_failure_$(date +%Y%m%d_%H%M%S).log
+            
+            # Restore from backup if exists
+            if [ -f "docker-compose.prod.yml.backup" ]; then
+              echo "Rolling back to previous state..."
+              mv docker-compose.prod.yml.backup docker-compose.prod.yml
+              docker-compose -f docker-compose.prod.yml down
+              docker-compose -f docker-compose.prod.yml up -d
+              
+              # Verify rollback
+              sleep 20
+              if ! docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+                echo "Rollback failed. Manual intervention required."
+                exit 1
+              fi
+              echo "Rollback completed successfully"
+            else
+              echo "No backup found for rollback"
+              exit 1
+            fi
+          '
+
+      - name: Cleanup
+        if: always()
+        run: |
+          ssh -i ~/.ssh/gcp_key udaykiran@34.57.145.110 '
+            cd ~/learnlab
+            rm -f docker-compose.prod.yml.backup containers.backup
+            # Keep only last 5 log files
+            ls -t deployment_failure_*.log | tail -n +6 | xargs -r rm
+          '
