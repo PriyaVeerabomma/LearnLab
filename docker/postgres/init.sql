@@ -1,3 +1,4 @@
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -205,8 +206,7 @@ SELECT
     u.email,
     u.username,
     COUNT(DISTINCT fd.id) as total_decks,
-    COUNT(DISTINCT f.id) as total_cards,
-    COUNT(DISTINCT fd.file_id) as files_with_decks,
+    COUNT(DISTINCT f.id) as total_cards,    
     COALESCE(AVG(lp.ease_factor), 2.5) as avg_performance
 FROM users u
 LEFT JOIN flashcard_decks fd ON u.id = fd.user_id AND fd.is_active = true
@@ -214,18 +214,18 @@ LEFT JOIN flashcards f ON fd.id = f.deck_id AND f.is_active = true
 LEFT JOIN learning_progress lp ON f.id = lp.flashcard_id
 GROUP BY u.id, u.email, u.username;
 
-CREATE OR REPLACE VIEW due_cards_view AS
-SELECT 
-    lp.user_id,
-    fd.id as deck_id,
-    fd.title as deck_title,
-    f.file_id,
-    COUNT(*) as due_cards_count
-FROM learning_progress lp
-JOIN flashcards f ON lp.flashcard_id = f.id AND f.is_active = true
-JOIN flashcard_decks fd ON f.deck_id = fd.id AND fd.is_active = true
-WHERE lp.next_review <= CURRENT_TIMESTAMP
-GROUP BY lp.user_id, fd.id, fd.title, f.file_id;
+-- CREATE OR REPLACE VIEW due_cards_view AS
+-- SELECT 
+--     lp.user_id,
+--     fd.id as deck_id,
+--     fd.title as deck_title,
+--     f.file_id,
+--     COUNT(*) as due_cards_count
+-- FROM learning_progress lp
+-- JOIN flashcards f ON lp.flashcard_id = f.id AND f.is_active = true
+-- JOIN flashcard_decks fd ON f.deck_id = fd.id AND fd.is_active = true
+-- WHERE lp.next_review <= CURRENT_TIMESTAMP
+-- GROUP BY lp.user_id, fd.id, fd.title, f.file_id;
 
 CREATE OR REPLACE VIEW user_podcast_stats AS
 SELECT 
