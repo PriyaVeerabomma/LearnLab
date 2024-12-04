@@ -1,15 +1,16 @@
+import os
+import pytest
 from fastapi.testclient import TestClient
-
-# Import app after environment variables are set
+from unittest.mock import patch
 from app.main import app
 
 client = TestClient(app)
 
-def test_read_main():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "message" in response.json()
-    assert response.json()["message"] == "Welcome to LearnLab API"
+@pytest.fixture(autouse=True)
+def mock_db_operations():
+    """Mock database operations during tests"""
+    with patch('app.main.Base.metadata.create_all'):
+        yield
 
 def test_read_health():
     response = client.get("/health")
@@ -18,3 +19,9 @@ def test_read_health():
         "status": "healthy",
         "message": "Service is running"
     }
+
+def test_read_main():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "message" in response.json()
+    assert response.json()["message"] == "Welcome to LearnLab API"
