@@ -21,17 +21,34 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))", // sky-blue
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           muted: "hsl(var(--primary-muted))",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))", // celadon
+          DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          muted: "hsl(var(--secondary-muted))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))", // dark blue
+          DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          muted: "hsl(var(--accent-muted))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+          muted: "hsl(var(--destructive-muted))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+          muted: "hsl(var(--warning-muted))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+          muted: "hsl(var(--success-muted))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -44,18 +61,6 @@ module.exports = {
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
-        },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
-        },
-        warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
         },
       },
       borderRadius: {
@@ -83,7 +88,27 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'hero-pattern': 'linear-gradient(to right bottom, hsl(var(--primary)), hsl(var(--secondary)))',
+        'gradient-primary': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary-muted)))',
+        'gradient-secondary': 'linear-gradient(to right, hsl(var(--secondary)), hsl(var(--secondary-muted)))',
+        'gradient-accent': 'linear-gradient(to right, hsl(var(--accent)), hsl(var(--accent-muted)))',
+        'gradient-destructive': 'linear-gradient(to right, hsl(var(--destructive)), hsl(var(--destructive-muted)))',
+        'gradient-warning': 'linear-gradient(to right, hsl(var(--warning)), hsl(var(--warning-muted)))',
+        'gradient-success': 'linear-gradient(to right, hsl(var(--success)), hsl(var(--success-muted)))',
+        'gradient-to-t': 'linear-gradient(to top, var(--tw-gradient-stops))',
+        'gradient-to-tr': 'linear-gradient(to top right, var(--tw-gradient-stops))',
+        'gradient-to-r': 'linear-gradient(to right, var(--tw-gradient-stops))',
+        'gradient-to-br': 'linear-gradient(to bottom right, var(--tw-gradient-stops))',
+        'gradient-to-b': 'linear-gradient(to bottom, var(--tw-gradient-stops))',
+        'gradient-to-bl': 'linear-gradient(to bottom left, var(--tw-gradient-stops))',
+        'gradient-to-l': 'linear-gradient(to left, var(--tw-gradient-stops))',
+        'gradient-to-tl': 'linear-gradient(to top left, var(--tw-gradient-stops))',
+      },
+      
+      // Add gradient text utilities
+      textGradient: {
+        'primary': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary-muted)))',
+        'secondary': 'linear-gradient(to right, hsl(var(--secondary)), hsl(var(--secondary-muted)))',
+        'accent': 'linear-gradient(to right, hsl(var(--accent)), hsl(var(--accent-muted)))',
       },
     },
   },

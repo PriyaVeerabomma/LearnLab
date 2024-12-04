@@ -7,12 +7,15 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white border border-gray-200 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100",
-        primary: "bg-primary/10 border border-primary/30 text-gray-900 dark:text-gray-100",
-        secondary: "bg-secondary/10 border border-secondary/30 text-gray-900 dark:text-gray-100",
-        accent: "bg-accent/10 border border-accent/30 text-gray-900 dark:text-gray-100",
-        ghost: "bg-transparent text-gray-900 dark:text-gray-100",
-        outline: "border border-gray-200 text-gray-900 dark:border-gray-700 dark:text-gray-100",
+        default: "bg-card border border-border text-card-foreground",
+        primary: "bg-primary/10 border border-primary/30 text-foreground",
+        secondary: "bg-secondary/10 border border-secondary/30 text-foreground",
+        accent: "bg-accent/10 border border-accent/30 text-foreground",
+        destructive: "bg-destructive/10 border border-destructive/30 text-foreground",
+        warning: "bg-warning/10 border border-warning/30 text-foreground",
+        success: "bg-success/10 border border-success/30 text-foreground",
+        ghost: "bg-transparent text-foreground",
+        outline: "border border-border text-foreground",
       },
       size: {
         default: "p-6",
@@ -24,12 +27,19 @@ const cardVariants = cva(
         md: "shadow-md",
         lg: "shadow-lg",
         none: "",
+      },
+      hover: {
+        default: "",
+        lift: "hover:-translate-y-0.5 transition-transform",
+        glow: "hover:shadow-lg hover:shadow-primary/20 transition-shadow",
+        none: "",
       }
     },
     defaultVariants: {
       variant: "default",
       size: "default",
       shadow: "default",
+      hover: "none",
     },
   }
 )
@@ -39,10 +49,10 @@ export interface CardProps
     VariantProps<typeof cardVariants> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, size, shadow, ...props }, ref) => (
+  ({ className, variant, size, shadow, hover, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(cardVariants({ variant, size, shadow, className }))}
+      className={cn(cardVariants({ variant, size, shadow, hover, className }))}
       {...props}
     />
   )
@@ -67,7 +77,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("font-semibold leading-none tracking-tight text-gray-900 dark:text-gray-100", className)}
+    className={cn("font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ))
@@ -79,7 +89,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-gray-500 dark:text-gray-400", className)}
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ))
