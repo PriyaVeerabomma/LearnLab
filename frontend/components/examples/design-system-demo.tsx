@@ -1,37 +1,84 @@
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function DesignSystemDemo() {
+export default function Home() {
   return (
-    <div className="p-8 space-y-8">
-      {/* Typography */}
-      <section className="space-y-4">
-        <h1>Heading 1</h1>
-        <h2>Heading 2</h2>
-        <h3>Heading 3</h3>
-        <p className="max-w-2xl">Body text with good line length. Our design system uses clean typography with a modern sans-serif font. The text is optimized for readability with appropriate line heights and spacing.</p>
+    <div className="container mx-auto min-h-screen py-10 px-4">
+      {/* Theme Toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
+      {/* Header */}
+      <section className="text-center mb-12">
+        <h1 className="text-4xl font-bold tracking-tight mb-4">
+          Welcome to LearnLab
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          This is a demonstration of our design system with light and dark mode support.
+        </p>
       </section>
 
+      {/* Components Demo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Default Card */}
+        <Card variant="default" shadow="md">
+          <CardHeader>
+            <CardTitle>Default Card</CardTitle>
+            <CardDescription>This is a default card variant</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Content goes here</p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="default">Action</Button>
+          </CardFooter>
+        </Card>
+
+        {/* Secondary Card */}
+        <Card variant="secondary" shadow="md">
+          <CardHeader>
+            <CardTitle>Secondary Card</CardTitle>
+            <CardDescription>This is a secondary card variant</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Content goes here</p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="secondary">Action</Button>
+          </CardFooter>
+        </Card>
+
+        {/* Accent Card */}
+        <Card variant="accent" shadow="md">
+          <CardHeader>
+            <CardTitle>Accent Card</CardTitle>
+            <CardDescription>This is an accent card variant</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Content goes here</p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="accent">Action</Button>
+          </CardFooter>
+        </Card>
+      </div>
+
       {/* Button Variants */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-heading font-bold">Button Variants</h2>
+      <section className="mt-12 space-y-6">
+        <h2 className="text-3xl font-bold tracking-tight">Button Variants</h2>
         <div className="flex flex-wrap gap-4">
-          <Button>Default Button</Button>
+          <Button variant="default">Default</Button>
           <Button variant="secondary">Secondary</Button>
+          <Button variant="accent">Accent</Button>
           <Button variant="destructive">Destructive</Button>
           <Button variant="warning">Warning</Button>
           <Button variant="outline">Outline</Button>
           <Button variant="ghost">Ghost</Button>
           <Button variant="link">Link</Button>
         </div>
-        
+
         {/* Button Sizes */}
         <div className="flex flex-wrap items-center gap-4">
           <Button size="sm">Small</Button>
@@ -41,132 +88,22 @@ export function DesignSystemDemo() {
         </div>
       </section>
 
-      {/* Card Variants */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-heading font-bold">Card Variants</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Default Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Default Card</CardTitle>
-              <CardDescription>Default card with standard styling</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This is the default card variant with default shadows and padding.</p>
-            </CardContent>
-            <CardFooter>
-              <Button>Action</Button>
-            </CardFooter>
-          </Card>
-
-          {/* Primary Card */}
-          <Card variant="primary" shadow="md">
-            <CardHeader>
-              <CardTitle>Primary Card</CardTitle>
-              <CardDescription>Card with primary colors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This card uses the primary color palette with medium shadows.</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="secondary">Action</Button>
-            </CardFooter>
-          </Card>
-
-          {/* Secondary Card */}
-          <Card variant="secondary" shadow="lg">
-            <CardHeader>
-              <CardTitle>Secondary Card</CardTitle>
-              <CardDescription>Card with secondary colors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This card uses the secondary color palette with large shadows.</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="accent">Action</Button>
-            </CardFooter>
-          </Card>
-
-          {/* Accent Card */}
-          <Card variant="accent" size="sm">
-            <CardHeader>
-              <CardTitle>Accent Card</CardTitle>
-              <CardDescription>Smaller card with accent colors</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This card uses the accent color palette with small padding.</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline">Action</Button>
-            </CardFooter>
-          </Card>
-
-          {/* Ghost Card */}
-          <Card variant="ghost" size="lg">
-            <CardHeader>
-              <CardTitle>Ghost Card</CardTitle>
-              <CardDescription>Transparent background</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This card has no background color and larger padding.</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="ghost">Action</Button>
-            </CardFooter>
-          </Card>
-
-          {/* Outline Card */}
-          <Card variant="outline" shadow="none">
-            <CardHeader>
-              <CardTitle>Outline Card</CardTitle>
-              <CardDescription>Border only</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>This card has only a border without any shadows.</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline">Action</Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </section>
-
-      {/* Color Palette */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-heading font-bold">Color Palette</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <div className="h-20 bg-primary rounded-lg"></div>
-            <p className="text-sm font-medium">Primary (Sky Blue)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-secondary rounded-lg"></div>
-            <p className="text-sm font-medium">Secondary (Celadon)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-accent rounded-lg"></div>
-            <p className="text-sm font-medium">Accent (Wisteria)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-destructive rounded-lg"></div>
-            <p className="text-sm font-medium">Destructive (Light Coral)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-warning rounded-lg"></div>
-            <p className="text-sm font-medium">Warning (Sunset)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-background rounded-lg border"></div>
-            <p className="text-sm font-medium">Background (Baby Powder)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-foreground rounded-lg"></div>
-            <p className="text-sm font-medium">Foreground (Eerie Black)</p>
-          </div>
-          <div className="space-y-2">
-            <div className="h-20 bg-muted rounded-lg"></div>
-            <p className="text-sm font-medium">Muted</p>
-          </div>
+      {/* Typography */}
+      <section className="mt-12 space-y-6">
+        <h2 className="text-3xl font-bold tracking-tight">Typography</h2>
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight">Heading 1</h1>
+          <h2 className="text-3xl font-bold tracking-tight">Heading 2</h2>
+          <h3 className="text-2xl font-bold tracking-tight">Heading 3</h3>
+          <p className="text-lg leading-7">
+            Regular paragraph text with good line length. The quick brown fox jumps over the lazy dog.
+          </p>
+          <p className="text-lg text-muted-foreground">
+            Secondary text color example.
+          </p>
+          <small className="text-sm text-muted-foreground">
+            Small text example
+          </small>
         </div>
       </section>
     </div>

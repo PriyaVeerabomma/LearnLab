@@ -1,76 +1,313 @@
+/* globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-
+    /* Base Colors */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+    
+    /* Card Colors */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
- 
+    --card-foreground: 0 0% 10%;
+    
+    /* Popover Colors */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
- 
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
- 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
- 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
- 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
- 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
- 
-    --radius: 0.5rem;
+    --popover-foreground: 0 0% 10%;
+    
+    /* Primary - Sky Blue */
+    --primary: 199 67% 73%;
+    --primary-foreground: 0 0% 100%;
+    --primary-muted: 199 67% 85%;
+    
+    /* Secondary - Celadon */
+    --secondary: 122 41% 78%;
+    --secondary-foreground: 0 0% 10%;
+    --secondary-muted: 122 41% 90%;
+    
+    /* Accent - Wisteria */
+    --accent: 285 33% 78%;
+    --accent-foreground: 0 0% 10%;
+    --accent-muted: 285 33% 90%;
+    
+    /* Destructive - Light Coral */
+    --destructive: 0 71% 72%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-muted: 0 71% 85%;
+    
+    /* Warning - Sunset */
+    --warning: 35 90% 82%;
+    --warning-foreground: 0 0% 10%;
+    --warning-muted: 35 90% 90%;
+    
+    /* Success */
+    --success: 142 72% 29%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 142 72% 90%;
+    
+    /* Muted */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    
+    /* Base Elements */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 199 67% 73%;
+    
+    /* Border Radius */
+    --radius: 0.75rem;
   }
  
   .dark {
-    --background: 0 0% 3.9%;
+    /* Base Colors */
+    --background: 0 0% 10%;
     --foreground: 0 0% 98%;
- 
-    --card: 0 0% 3.9%;
+    
+    /* Card Colors */
+    --card: 0 0% 13%;
     --card-foreground: 0 0% 98%;
- 
-    --popover: 0 0% 3.9%;
+    
+    /* Popover Colors */
+    --popover: 0 0% 13%;
     --popover-foreground: 0 0% 98%;
- 
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
- 
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
- 
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
- 
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
- 
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    
+    /* Primary - Sky Blue (Darker) */
+    --primary: 199 67% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-muted: 199 67% 25%;
+    
+    /* Secondary - Celadon (Darker) */
+    --secondary: 122 41% 65%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-muted: 122 41% 25%;
+    
+    /* Accent - Wisteria (Darker) */
+    --accent: 285 33% 65%;
+    --accent-foreground: 0 0% 100%;
+    --accent-muted: 285 33% 25%;
+    
+    /* Destructive - Light Coral (Darker) */
+    --destructive: 0 71% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-muted: 0 71% 25%;
+    
+    /* Warning - Sunset (Darker) */
+    --warning: 35 90% 65%;
+    --warning-foreground: 0 0% 100%;
+    --warning-muted: 35 90% 25%;
+    
+    /* Success (Darker) */
+    --success: 142 72% 35%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 142 72% 15%;
+    
+    /* Muted */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    
+    /* Base Elements */
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 199 67% 60%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Typography Scale */
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-bold tracking-tight mb-3;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold tracking-tight mb-2;
+  }
+
+  p {
+    @apply leading-7 [&:not(:first-child)]:mt-6;
+  }
+}
+
+@layer components {
+  /* Button Variants */
+  .btn-base {
+    @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background 
+    transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 
+    disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90;
+  }
+
+  .btn-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90;
+  }
+
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+
+  .btn-warning {
+    @apply bg-warning text-warning-foreground hover:bg-warning/90;
+  }
+
+  .btn-outline {
+    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+
+  /* Button Sizes */
+  .btn-sm {
+    @apply h-9 rounded-md px-3;
+  }
+
+  .btn-default {
+    @apply h-10 px-4 py-2;
+  }
+
+  .btn-lg {
+    @apply h-11 rounded-md px-8;
+  }
+
+  .btn-icon {
+    @apply h-10 w-10;
+  }
+
+  /* Card Base */
+  .card-base {
+    @apply rounded-lg border bg-card text-card-foreground;
+  }
+
+  /* Card Variants */
+  .card-primary {
+    @apply bg-primary/10 border-primary/20;
+  }
+
+  .card-secondary {
+    @apply bg-secondary/10 border-secondary/20;
+  }
+
+  .card-accent {
+    @apply bg-accent/10 border-accent/20;
+  }
+
+  .card-ghost {
+    @apply bg-transparent border-transparent;
+  }
+
+  .card-outline {
+    @apply border-2;
+  }
+
+  /* Card Elements */
+  .card-header {
+    @apply flex flex-col space-y-1.5 p-6;
+  }
+
+  .card-title {
+    @apply text-2xl font-semibold leading-none tracking-tight;
+  }
+
+  .card-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .card-content {
+    @apply p-6 pt-0;
+  }
+
+  .card-footer {
+    @apply flex items-center p-6 pt-0;
+  }
+
+  /* Layout */
+  .container-base {
+    @apply mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+  }
+
+  .section-base {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  .grid-base {
+    @apply grid gap-4 md:gap-6 lg:gap-8;
+  }
+
+  /* Interactive States */
+  .hover-base {
+    @apply transition-all duration-200;
+  }
+
+  .hover-lift {
+    @apply hover:-translate-y-0.5;
+  }
+
+  .hover-opacity {
+    @apply hover:opacity-90;
+  }
+}
+
+@layer utilities {
+  /* Responsive Paddings */
+  .p-responsive {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  .px-responsive {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .py-responsive {
+    @apply py-4 sm:py-6 lg:py-8;
+  }
+
+  /* Grid Columns */
+  .grid-responsive {
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* Text Gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary-muted bg-clip-text text-transparent;
+  }
+
+  .text-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary to-secondary-muted bg-clip-text text-transparent;
+  }
+
+  /* Background Gradients */
+  .bg-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary-muted;
+  }
+
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary to-secondary-muted;
+  }
+
+  /* Focus Rings */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 }

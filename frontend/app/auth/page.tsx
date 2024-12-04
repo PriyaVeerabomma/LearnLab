@@ -15,23 +15,37 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#87CEEB] to-[#ACE1AF]">
-      <div className="container mx-auto min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-primary">
+      <div className="container-base min-h-screen flex items-center justify-center">
         <div className="w-full max-w-md space-y-8">
+          {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold text-[#003366]">Welcome to LearnLab</h1>
-            <p className="text-lg text-gray-700">
+            <h1 className="heading-section text-accent">
+              Welcome to LearnLab
+            </h1>
+            <p className="text-body">
               {tab === 'login' 
                 ? 'Sign in to continue to your account' 
                 : 'Create an account to get started'}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Auth Card */}
+          <div className="card-base shadow-lg p-responsive">
             <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger 
+                  value="login"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Login
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="register"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Register
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="login" className="mt-0">

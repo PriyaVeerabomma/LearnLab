@@ -5,11 +5,19 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+interface FormData {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+  full_name: string;
+}
+
 export function RegisterForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     username: '',
     password: '',
@@ -54,99 +62,74 @@ export function RegisterForm() {
     }
   };
 
+  const renderFormField = (
+    label: string,
+    name: keyof FormData,
+    type: string,
+    placeholder: string,
+    isPassword?: boolean
+  ) => (
+    <div className="space-y-2">
+      <Label 
+        htmlFor={name}
+        className="text-foreground"
+      >
+        {label}
+      </Label>
+      <div className="relative">
+        <Input
+          id={name}
+          name={name}
+          type={isPassword ? (showPassword ? "text" : "password") : type}
+          placeholder={placeholder}
+          value={formData[name]}
+          onChange={handleChange}
+          required
+          className="bg-background"
+        />
+        {isPassword && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <>
+                <EyeOff className="h-4 w-4 mr-1" />
+                Hide
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 mr-1" />
+                Show
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {(error || validationError) && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error || validationError}</AlertDescription>
         </Alert>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="full_name">Full Name</Label>
-        <Input
-          id="full_name"
-          name="full_name"
-          type="text"
-          placeholder="Enter your full name"
-          value={formData.full_name}
-          onChange={handleChange}
-          required
-          className="bg-white"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="bg-white"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="username">Username</Label>
-        <Input
-          id="username"
-          name="username"
-          type="text"
-          placeholder="Choose a username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-          className="bg-white"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Create a password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="bg-white"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? 'Hide' : 'Show'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type={showPassword ? "text" : "password"}
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          required
-          className="bg-white"
-        />
-      </div>
+      {renderFormField('Full Name', 'full_name', 'text', 'Enter your full name')}
+      {renderFormField('Email', 'email', 'email', 'Enter your email')}
+      {renderFormField('Username', 'username', 'text', 'Choose a username')}
+      {renderFormField('Password', 'password', 'password', 'Create a password', true)}
+      {renderFormField('Confirm Password', 'confirmPassword', 'password', 'Confirm your password', true)}
 
       <Button 
         type="submit" 
-        className="w-full bg-[#87CEEB] hover:bg-[#87CEEB]/90 text-[#003366]"
+        className="btn-primary w-full hover-base hover-lift"
         size="lg"
         disabled={isLoading}
       >
