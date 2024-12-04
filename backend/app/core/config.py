@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Database Configuration
-    DATABASE_URL: str = "postgresql://postgres:postgres@db:5432/learnlab"
+    DATABASE_URL: str 
 
     # JWT Configuration
     JWT_SECRET_KEY: str

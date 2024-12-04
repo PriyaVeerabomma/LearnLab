@@ -1,25 +1,12 @@
-import sys
-from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch, MagicMock
 
-# Create mock patches
-mock_patches = {
-    'app.core.database.Base': patch('app.core.database.Base.metadata.create_all'),
-    'app.core.database.engine': patch('app.core.database.engine'),
-    'app.core.database.SessionLocal': patch('app.core.database.SessionLocal')
-}
-
-# Apply all patches
-for mock in mock_patches.values():
-    mock.start()
-
-# Import app after patches are applied
-from app.main import app
-
-# Stop all patches after import
-for mock in mock_patches.values():
-    mock.stop()
+# First mock the database to prevent any database operations
+engine_mock = MagicMock()
+with patch('sqlalchemy.create_engine', return_value=engine_mock), \
+     patch('app.core.database.Base.metadata.create_all'):
+    from app.main import app
 
 client = TestClient(app)
 
