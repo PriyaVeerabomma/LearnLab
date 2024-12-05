@@ -28,13 +28,14 @@ CREATE TABLE IF NOT EXISTS files (
 );
 
 -- Create user sessions table
-CREATE TABLE IF NOT EXISTS user_sessions (
+CREATE TABLE user_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    session_token VARCHAR(255) NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    refresh_token VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    device_info VARCHAR(255),
+    UNIQUE(user_id, refresh_token)
 );
 
 -- Create flashcard decks table
@@ -218,14 +219,13 @@ CREATE OR REPLACE VIEW due_cards_view AS
 SELECT 
     lp.user_id,
     fd.id as deck_id,
-    fd.title as deck_title,
-    f.file_id,
+    fd.title as deck_title,    
     COUNT(*) as due_cards_count
 FROM learning_progress lp
 JOIN flashcards f ON lp.flashcard_id = f.id AND f.is_active = true
 JOIN flashcard_decks fd ON f.deck_id = fd.id AND fd.is_active = true
 WHERE lp.next_review <= CURRENT_TIMESTAMP
-GROUP BY lp.user_id, fd.id, fd.title, f.file_id;
+GROUP BY lp.user_id, fd.id, fd.title;
 
 CREATE OR REPLACE VIEW user_podcast_stats AS
 SELECT 

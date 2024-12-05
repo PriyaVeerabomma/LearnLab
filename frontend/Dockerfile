@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Install dependencies first (caching)
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --force
 
 # Copy rest of the application
 COPY . .
@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --force
 
 # Copy source
 COPY . .

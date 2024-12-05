@@ -126,6 +126,13 @@ async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token"
         )
+        
+@router.get("/me", response_model=User)
+async def me(current_user: UserModel = Depends(get_current_user)):
+    """
+    Get current user
+    """
+    return current_user
 
 @router.post("/logout")
 async def logout(
