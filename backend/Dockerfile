@@ -21,11 +21,13 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 # Copy Poetry files
 COPY pyproject.toml poetry.lock ./
 
+# Copy application
+COPY . .
+
 # Install dependencies including development ones
 RUN poetry install --no-interaction --no-root
 
-# Copy application
-COPY . .
+
 
 # Expose port
 EXPOSE 8000
@@ -57,10 +59,13 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 
 # Copy Poetry files and install only production dependencies
 COPY pyproject.toml poetry.lock ./
-RUN poetry install --no-dev --no-interaction --no-ansi
 
 # Copy application
 COPY . .
+
+RUN poetry install --no-dev --no-interaction --no-ansi
+
+
 
 # Create non-root user for security
 RUN addgroup --system appgroup && \
