@@ -1,4 +1,3 @@
-#3rd file
 name: Deploy to GCP
 
 on:
