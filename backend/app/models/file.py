@@ -22,3 +22,4 @@ class File(Base):
     user = relationship("User", back_populates="files")
     deck = relationship("FlashcardDeck", back_populates="file", uselist=False)  # one-to-one relationship
     podcasts = relationship("Podcast", back_populates="file", uselist=False)  # one-to-one relationship
+    quizzes = relationship("Quiz", back_populates="file", cascade="all, delete-orphan")  # one-to-many relationship

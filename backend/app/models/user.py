@@ -22,7 +22,11 @@ class User(Base):
     decks = relationship("FlashcardDeck", back_populates="user", cascade="all, delete-orphan")
     learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")
     
-    # # Podcast relationships
+    # Podcast relationships
     podcasts = relationship("Podcast", back_populates="user", cascade="all, delete-orphan")
     podcast_progress = relationship("PodcastProgress", back_populates="user", cascade="all, delete-orphan")
     podcast_analytics = relationship("PodcastAnalytics", back_populates="user", cascade="all, delete-orphan")
+
+    # Quiz relationships
+    quizzes = relationship("Quiz", back_populates="user", cascade="all, delete-orphan")
+    quiz_attempts = relationship("QuizAttempt", back_populates="user", cascade="all, delete-orphan")

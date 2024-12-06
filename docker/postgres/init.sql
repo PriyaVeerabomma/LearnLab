@@ -144,6 +144,175 @@ CREATE INDEX IF NOT EXISTS idx_podcast_analytics_user_id ON podcast_analytics(us
 CREATE INDEX IF NOT EXISTS idx_podcast_analytics_podcast_id ON podcast_analytics(podcast_id);
 CREATE INDEX IF NOT EXISTS idx_podcast_analytics_date ON podcast_analytics(date);
 
+-- Create quiz tables
+CREATE TABLE IF NOT EXISTS quizzes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    file_id UUID REFERENCES files(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS questions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
+    question_type VARCHAR(50) NOT NULL CHECK (question_type IN ('multiple_choice', 'subjective')),
+    content TEXT NOT NULL,
+    explanation TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS question_concepts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
+    concept VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS multiple_choice_options (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    is_correct BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS subjective_answers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
+    answer TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS quiz_attempts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP WITH TIME ZONE,
+    score FLOAT,
+    status VARCHAR(50) DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS question_responses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    attempt_id UUID REFERENCES quiz_attempts(id) ON DELETE CASCADE,
+    question_id UUID REFERENCES questions(id) ON DELETE CASCADE,
+    response TEXT NOT NULL,
+    is_correct BOOLEAN,
+    confidence_score FLOAT,
+    time_taken INTEGER, -- in seconds
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes
+CREATE INDEX idx_quizzes_file_id ON quizzes(file_id);
+CREATE INDEX idx_quizzes_user_id ON quizzes(user_id);
+CREATE INDEX idx_quizzes_is_active ON quizzes(is_active);
+CREATE INDEX idx_questions_quiz_id ON questions(quiz_id);
+CREATE INDEX idx_questions_question_type ON questions(question_type);
+CREATE INDEX idx_question_concepts_question_id ON question_concepts(question_id);
+CREATE INDEX idx_question_concepts_concept ON question_concepts(concept);
+CREATE INDEX idx_multiple_choice_options_question_id ON multiple_choice_options(question_id);
+CREATE INDEX idx_subjective_answers_question_id ON subjective_answers(question_id);
+CREATE INDEX idx_quiz_attempts_quiz_id ON quiz_attempts(quiz_id);
+CREATE INDEX idx_quiz_attempts_user_id ON quiz_attempts(user_id);
+CREATE INDEX idx_quiz_attempts_status ON quiz_attempts(status);
+CREATE INDEX idx_question_responses_attempt_id ON question_responses(attempt_id);
+CREATE INDEX idx_question_responses_question_id ON question_responses(question_id);
+
+-- Create triggers for updated_at
+CREATE TRIGGER update_quizzes_updated_at
+    BEFORE UPDATE ON quizzes
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_questions_updated_at
+    BEFORE UPDATE ON questions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_quiz_attempts_updated_at
+    BEFORE UPDATE ON quiz_attempts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create views for analytics
+CREATE OR REPLACE VIEW file_quiz_stats AS
+SELECT 
+    f.id as file_id,
+    f.filename,
+    COUNT(DISTINCT q.id) as total_quizzes,
+    COUNT(DISTINCT que.id) as total_questions,
+    COUNT(DISTINCT qa.id) as total_attempts,
+    AVG(qa.score) as average_score,
+    COUNT(DISTINCT qa.user_id) as unique_participants,
+    SUM(qr.time_taken) as total_time_spent,
+    COUNT(DISTINCT qc.concept) as unique_concepts,
+    SUM(CASE WHEN que.question_type = 'multiple_choice' THEN 1 ELSE 0 END) as multiple_choice_count,
+    SUM(CASE WHEN que.question_type = 'subjective' THEN 1 ELSE 0 END) as subjective_count,
+    AVG(CASE WHEN qr.is_correct IS NOT NULL THEN qr.is_correct::int ELSE NULL END) * 100 as success_rate
+FROM files f
+LEFT JOIN quizzes q ON f.id = q.file_id
+LEFT JOIN questions que ON q.id = que.quiz_id
+LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
+LEFT JOIN question_responses qr ON qa.id = qr.attempt_id
+LEFT JOIN question_concepts qc ON que.id = qc.question_id
+WHERE q.is_active = true AND que.is_active = true
+GROUP BY f.id, f.filename;
+
+-- Create function for quiz statistics
+CREATE OR REPLACE FUNCTION get_quiz_statistics(quiz_id_param UUID)
+RETURNS TABLE (
+    total_attempts INTEGER,
+    average_score FLOAT,
+    average_time_per_question INTEGER,
+    concept_success_rates JSON,
+    question_success_rates JSON
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH concept_stats AS (
+        SELECT 
+            qc.concept,
+            AVG(CASE WHEN qr.is_correct IS NOT NULL THEN qr.is_correct::int ELSE NULL END) * 100 as success_rate
+        FROM questions q
+        JOIN question_concepts qc ON q.id = qc.question_id
+        LEFT JOIN question_responses qr ON q.id = qr.question_id
+        WHERE q.quiz_id = quiz_id_param
+        GROUP BY qc.concept
+    ),
+    question_stats AS (
+        SELECT 
+            q.id,
+            q.content,
+            AVG(CASE WHEN qr.is_correct IS NOT NULL THEN qr.is_correct::int ELSE NULL END) * 100 as success_rate,
+            AVG(qr.time_taken) as avg_time
+        FROM questions q
+        LEFT JOIN question_responses qr ON q.id = qr.question_id
+        WHERE q.quiz_id = quiz_id_param
+        GROUP BY q.id, q.content
+    )
+    SELECT 
+        COUNT(DISTINCT qa.id)::INTEGER as total_attempts,
+        AVG(qa.score)::FLOAT as average_score,
+        AVG(qr.time_taken)::INTEGER as average_time_per_question,
+        (SELECT json_object_agg(concept, success_rate) FROM concept_stats) as concept_success_rates,
+        (SELECT json_object_agg(content, json_build_object('success_rate', success_rate, 'avg_time', avg_time)) 
+         FROM question_stats) as question_success_rates
+    FROM quizzes q
+    LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
+    LEFT JOIN question_responses qr ON qa.id = qr.attempt_id
+    WHERE q.id = quiz_id_param;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
