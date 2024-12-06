@@ -6,5 +6,10 @@ export const API_ROUTES = {
     list: `${API_BASE_URL}/api/files/files`,
     delete: (id: string) => `${API_BASE_URL}/api/files/files/${id}`,
     get: (id: string) => `${API_BASE_URL}/api/files/files/${id}`,
-  }
+  },
+  podcasts: {
+    base: `${API_BASE_URL}/api/podcasts`,
+    list: `${API_BASE_URL}/api/podcasts`,
+    get: (id: string) => `${API_BASE_URL}/api/podcasts/${id}`,
+  },
 };
