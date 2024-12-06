@@ -1,12 +1,12 @@
-name: Test Backend
+name: Testing
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
-    paths:
-      - 'backend/**'
-      - '.github/workflows/**'
 
 env:
   PYTHON_VERSION: '3.12'
