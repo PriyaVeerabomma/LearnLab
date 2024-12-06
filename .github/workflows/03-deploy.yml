@@ -2,13 +2,9 @@ name: Deploy Docker Images in GCP
 
 on:
   workflow_run:
-    workflows: ["Build and Push Docker Images to Docker Hub"]
+    workflows: ["2. Build and Push Docker Images to Docker Hub"]
     types:
       - completed
-    branches:
-      - main
-  pull_request:
-    types: [closed]
     branches:
       - main
 

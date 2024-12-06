@@ -1,8 +1,7 @@
-name: Build and Push Docker Images to Docker Hub
+name: 2. Build and Push Docker Images to Docker Hub
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - main
   
@@ -21,7 +20,6 @@ env:
 jobs:
   build:
     name: Build Docker Images
-    if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     
     steps:
