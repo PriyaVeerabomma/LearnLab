@@ -18,5 +18,5 @@ class PodcastAnalytics(Base):
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    # user = relationship("User", back_populates="podcast_analytics")
-    # podcast = relationship("Podcast", back_populates="analytics")
+    user = relationship("User", back_populates="podcast_analytics")
+    podcast = relationship("Podcast", back_populates="analytics")

@@ -21,7 +21,7 @@ class Podcast(Base):
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # # Relationships
-    # user = relationship("User", back_populates="podcasts")
-    # file = relationship("File", back_populates="podcasts")
-    # progress = relationship("PodcastProgress", back_populates="podcast", cascade="all, delete-orphan")
-    # analytics = relationship("PodcastAnalytics", back_populates="podcast", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="podcasts")
+    file = relationship("File", back_populates="podcasts")
+    progress = relationship("PodcastProgress", back_populates="podcast", cascade="all, delete-orphan")
+    analytics = relationship("PodcastAnalytics", back_populates="podcast", cascade="all, delete-orphan")

@@ -23,6 +23,6 @@ class User(Base):
     learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")
     
     # # Podcast relationships
-    # podcasts = relationship("Podcast", back_populates="user", cascade="all, delete-orphan")
-    # podcast_progress = relationship("PodcastProgress", back_populates="user", cascade="all, delete-orphan")
-    # podcast_analytics = relationship("PodcastAnalytics", back_populates="user", cascade="all, delete-orphan")
+    podcasts = relationship("Podcast", back_populates="user", cascade="all, delete-orphan")
+    podcast_progress = relationship("PodcastProgress", back_populates="user", cascade="all, delete-orphan")
+    podcast_analytics = relationship("PodcastAnalytics", back_populates="user", cascade="all, delete-orphan")

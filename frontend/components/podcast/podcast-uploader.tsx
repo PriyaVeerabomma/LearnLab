@@ -23,6 +23,20 @@ import { useRouter } from 'next/navigation';
 import { fetchClient } from '@/lib/api/fetch-client';
 import { API_ROUTES } from '@/config';
 
+// Validation constants
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_TRANSCRIPT_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_AUDIO_TYPES = {
+  'audio/mp3': ['.mp3'],
+  'audio/mpeg': ['.mp3'],
+  'audio/wav': ['.wav'],
+  'audio/m4a': ['.m4a']
+};
+const ALLOWED_TRANSCRIPT_TYPES = {
+  'text/plain': ['.txt'],
+  'text/vtt': ['.vtt']
+};
+
 export function PodcastUploader() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -63,34 +77,72 @@ export function PodcastUploader() {
     fetchFiles();
   }, [setFiles, toast, router]);
 
+  const validateFile = (file: File, maxSize: number, allowedTypes: Record<string, string[]>) => {
+    if (file.size > maxSize) {
+      throw new Error(`File size exceeds ${maxSize / (1024 * 1024)}MB limit`);
+    }
+    
+    const isValidType = Object.keys(allowedTypes).includes(file.type);
+    if (!isValidType) {
+      throw new Error(`Invalid file type. Allowed types: ${Object.values(allowedTypes).flat().join(', ')}`);
+    }
+  };
+
   const onAudioDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    setAudioFile(file);
-  }, []);
+    try {
+      const file = acceptedFiles[0];
+      validateFile(file, MAX_AUDIO_SIZE, ALLOWED_AUDIO_TYPES);
+      setAudioFile(file);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Audio File",
+        description: error instanceof Error ? error.message : "Failed to process audio file",
+      });
+    }
+  }, [toast]);
 
   const onTranscriptDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    setTranscriptFile(file);
-  }, []);
+    try {
+      const file = acceptedFiles[0];
+      validateFile(file, MAX_TRANSCRIPT_SIZE, ALLOWED_TRANSCRIPT_TYPES);
+      setTranscriptFile(file);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Transcript File",
+        description: error instanceof Error ? error.message : "Failed to process transcript file",
+      });
+    }
+  }, [toast]);
 
   const { getRootProps: getAudioRootProps, getInputProps: getAudioInputProps } = useDropzone({
     onDrop: onAudioDrop,
-    accept: {
-      'audio/*': ['.mp3', '.wav', '.m4a']
-    },
+    accept: ALLOWED_AUDIO_TYPES,
     multiple: false,
     disabled: uploading
   });
 
   const { getRootProps: getTranscriptRootProps, getInputProps: getTranscriptInputProps } = useDropzone({
     onDrop: onTranscriptDrop,
-    accept: {
-      'text/plain': ['.txt'],
-      'text/vtt': ['.vtt']
-    },
+    accept: ALLOWED_TRANSCRIPT_TYPES,
     multiple: false,
     disabled: uploading
   });
+
+  const simulateProgress = () => {
+    setProgress(0);
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 95) {
+          clearInterval(interval);
+          return 95;
+        }
+        return prev + 5;
+      });
+    }, 500);
+    return interval;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,10 +157,9 @@ export function PodcastUploader() {
     }
 
     setUploading(true);
-    setProgress(0);
+    const progressInterval = simulateProgress();
 
     try {
-      // Create form data with all required fields
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description || '');
@@ -122,7 +173,7 @@ export function PodcastUploader() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create podcast');
+        throw new Error(await response.text());
       }
 
       const data = await response.json();
@@ -147,14 +198,15 @@ export function PodcastUploader() {
         description: error instanceof Error ? error.message : "Failed to create podcast",
       });
     } finally {
+      clearInterval(progressInterval);
       setUploading(false);
-      setProgress(0);
+      setTimeout(() => setProgress(0), 1000);
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="w-full">
+      <Card>
         <CardHeader>
           <CardTitle>Upload New Podcast</CardTitle>
         </CardHeader>
@@ -167,7 +219,7 @@ export function PodcastUploader() {
               onValueChange={(value) => setSelectedFileId(value)}
               disabled={uploading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Select source file" />
               </SelectTrigger>
               <SelectContent>
@@ -175,18 +227,15 @@ export function PodcastUploader() {
                   <SelectItem
                     key={file.id}
                     value={file.id}
-                    className="cursor-pointer"
                   >
                     {file.filename}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-sm text-muted-foreground">
-              Select the PDF file to associate with this podcast
-            </p>
           </div>
 
+          {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -195,9 +244,11 @@ export function PodcastUploader() {
               onChange={(e) => setTitle(e.target.value)}
               disabled={uploading}
               placeholder="Enter podcast title"
+              className="bg-background"
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -206,17 +257,19 @@ export function PodcastUploader() {
               onChange={(e) => setDescription(e.target.value)}
               disabled={uploading}
               placeholder="Enter podcast description"
+              className="bg-background"
             />
           </div>
 
+          {/* File Upload Dropzones */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Audio Upload */}
-            <div>
+            <div className="space-y-2">
               <Label>Audio File</Label>
               <div 
                 {...getAudioRootProps()} 
                 className={`
-                  mt-2 border-2 border-dashed rounded-lg p-6 
+                  border-2 border-dashed rounded-lg p-6 
                   cursor-pointer transition-colors
                   ${audioFile ? 'border-primary bg-primary/5' : 'border-border'}
                   ${uploading ? 'cursor-not-allowed opacity-50' : 'hover:border-primary/50'}
@@ -226,23 +279,19 @@ export function PodcastUploader() {
                 <div className="flex flex-col items-center justify-center space-y-2 text-center">
                   <Music className="h-8 w-8 text-muted-foreground" />
                   <div className="text-sm text-muted-foreground">
-                    {audioFile ? (
-                      <p>{audioFile.name}</p>
-                    ) : (
-                      <p>Drop audio file or click to select</p>
-                    )}
+                    {audioFile ? audioFile.name : 'Drop audio file or click to select'}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Transcript Upload */}
-            <div>
+            <div className="space-y-2">
               <Label>Transcript File</Label>
               <div 
                 {...getTranscriptRootProps()} 
                 className={`
-                  mt-2 border-2 border-dashed rounded-lg p-6 
+                  border-2 border-dashed rounded-lg p-6 
                   cursor-pointer transition-colors
                   ${transcriptFile ? 'border-primary bg-primary/5' : 'border-border'}
                   ${uploading ? 'cursor-not-allowed opacity-50' : 'hover:border-primary/50'}
@@ -252,17 +301,14 @@ export function PodcastUploader() {
                 <div className="flex flex-col items-center justify-center space-y-2 text-center">
                   <FileText className="h-8 w-8 text-muted-foreground" />
                   <div className="text-sm text-muted-foreground">
-                    {transcriptFile ? (
-                      <p>{transcriptFile.name}</p>
-                    ) : (
-                      <p>Drop transcript file (.txt or .vtt) or click to select</p>
-                    )}
+                    {transcriptFile ? transcriptFile.name : 'Drop transcript file or click to select'}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Upload Progress */}
           {uploading && (
             <div className="space-y-2">
               <Progress value={progress} />
@@ -272,12 +318,13 @@ export function PodcastUploader() {
             </div>
           )}
 
+          {/* Submit Button */}
           <Button 
             type="submit"
-            className="w-full" 
+            className="w-full"
             disabled={!title || !audioFile || !transcriptFile || !selectedFileId || uploading}
           >
-            {uploading ? 'Uploading...' : 'Upload Podcast'}
+            {uploading ? 'Uploading...' : 'Create Podcast'}
           </Button>
         </CardContent>
       </Card>

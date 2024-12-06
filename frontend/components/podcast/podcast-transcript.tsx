@@ -1,10 +1,14 @@
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { usePodcastStore } from '@/store/podcast-store';
 import { Search, Clock } from 'lucide-react';
+import { debounce } from 'lodash';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { fetchClient } from '@/lib/api/fetch-client';
 
 interface TranscriptLine {
   startTime: number;
@@ -17,26 +21,37 @@ export function PodcastTranscript() {
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const activeLineRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchTranscript = async () => {
-      if (!currentPodcast) return;
-      
+      if (!currentPodcast) {
+        setTranscript([]);
+        return;
+      }
+
       setLoading(true);
+      setError(null);
+      
       try {
-        // Try VTT first, fall back to TXT
-        const url = currentPodcast.transcriptVttUrl || currentPodcast.transcriptTxtUrl;
+        // Choose VTT over TXT if available
+        const url = currentPodcast.transcript_vtt_url || currentPodcast.transcript_txt_url;
+        if (!url) throw new Error('No transcript available');
+
         const response = await fetch(url);
-        const text = await response.text();
+        if (!response.ok) throw new Error('Failed to load transcript');
         
-        const lines = url.endsWith('.vtt') 
+        const text = await response.text();
+        const lines = url.includes('.vtt') 
           ? parseVTT(text)
           : parseTextTranscript(text);
         
         setTranscript(lines);
       } catch (error) {
         console.error('Failed to load transcript:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load transcript');
       } finally {
         setLoading(false);
       }
@@ -48,15 +63,13 @@ export function PodcastTranscript() {
   // Parse WebVTT format
   const parseVTT = (vttText: string): TranscriptLine[] => {
     const lines: TranscriptLine[] = [];
-    const cues = vttText.split('\n\n').slice(1); // Skip WEBVTT header
+    const cues = vttText.trim().split('\n\n').slice(1); // Skip WEBVTT header
 
     cues.forEach(cue => {
-      const [timing, ...textLines] = cue.split('\n');
+      const [timing, ...textLines] = cue.split('\n').filter(Boolean);
       if (!timing) return;
 
-      const [timeRange] = timing.split(' --> ');
       const [startTimeStr, endTimeStr] = timing.split(' --> ');
-      
       if (!startTimeStr || !endTimeStr) return;
 
       const startTime = timeToSeconds(startTimeStr.trim());
@@ -73,11 +86,11 @@ export function PodcastTranscript() {
 
   // Parse plain text format
   const parseTextTranscript = (text: string): TranscriptLine[] => {
-    // Split by paragraphs or sentences
-    const segments = text.split(/\n\n|\.\s+/);
-    const avgDuration = currentPodcast?.duration 
-      ? currentPodcast.duration / segments.length 
-      : 30;
+    if (!currentPodcast) return [];
+
+    // Split into meaningful segments (paragraphs or sentences)
+    const segments = text.split(/(?<=[.!?])\s+(?=[A-Z])/).filter(Boolean);
+    const avgDuration = currentPodcast.duration / segments.length;
 
     return segments.map((segment, index) => ({
       startTime: index * avgDuration,
@@ -106,30 +119,67 @@ export function PodcastTranscript() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Filter and highlight search results
-  const filteredTranscript = transcript.filter(line => 
-    line.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Auto-scroll to active line
+  useEffect(() => {
+    if (activeLineRef.current && !searchQuery) {
+      activeLineRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [currentTime, searchQuery]);
 
-  // Handle line click to seek audio
+  // Filter and highlight search results
+  const getFilteredTranscript = () => {
+    if (!searchQuery) return transcript;
+    
+    const query = searchQuery.toLowerCase();
+    return transcript.filter(line => 
+      line.text.toLowerCase().includes(query)
+    );
+  };
+
+  // Debounced search handler
+  const handleSearch = debounce((value: string) => {
+    setSearchQuery(value);
+  }, 300);
+
+  // Handle click on transcript line
   const handleLineClick = (startTime: number) => {
     setCurrentTime(startTime);
   };
 
+  // Find active line based on current time
+  const getActiveLine = (lines: TranscriptLine[]) => {
+    return lines.findIndex(
+      line => currentTime >= line.startTime && currentTime <= line.endTime
+    );
+  };
+
+  if (!currentPodcast) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>No Podcast Selected</CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const filteredTranscript = getFilteredTranscript();
+  const activeLine = getActiveLine(transcript);
+
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader className="space-y-1">
         <CardTitle>Transcript</CardTitle>
-        <div className="flex gap-2">
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search transcript..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full"
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-8"
           />
-          <Button variant="ghost" size="icon">
-            <Search className="h-4 w-4" />
-          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -137,13 +187,28 @@ export function PodcastTranscript() {
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             Loading transcript...
           </div>
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : filteredTranscript.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            {searchQuery ? 'No matches found' : 'No transcript available'}
+          </div>
         ) : (
-          <ScrollArea className="h-[500px] pr-4">
+          <ScrollArea 
+            ref={scrollAreaRef}
+            className="h-[500px] pr-4"
+          >
             <div className="space-y-4">
               {filteredTranscript.map((line, index) => {
-                const isActive = 
-                  currentTime >= line.startTime && 
-                  currentTime <= line.endTime;
+                const isActive = !searchQuery && index === activeLine;
+                const highlightedText = searchQuery 
+                  ? line.text.replace(
+                      new RegExp(searchQuery, 'gi'),
+                      match => `<mark class="bg-accent text-accent-foreground px-1 rounded">${match}</mark>`
+                    )
+                  : line.text;
 
                 return (
                   <div
@@ -159,7 +224,10 @@ export function PodcastTranscript() {
                       <Clock className="h-3 w-3" />
                       {formatTime(line.startTime)}
                     </div>
-                    <p className="text-sm leading-relaxed">{line.text}</p>
+                    <p 
+                      className="text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: highlightedText }}
+                    />
                   </div>
                 );
               })}

@@ -1,3 +1,5 @@
+'use client';
+
 import { 
   Card, 
   CardContent, 
@@ -8,12 +10,50 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { usePodcastStore } from '@/store/podcast-store';
-import { Clock, Calendar, BarChart2, PlayCircle } from 'lucide-react';
+import { 
+  Clock, 
+  Play, 
+  BarChart2, 
+  BookOpen,
+  ArrowUpRight,
+  Activity,
+  Users,
+  PlayCircle
+} from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
+import { useEffect } from 'react';
+import { fetchClient } from '@/lib/api/fetch-client';
+import { API_ROUTES } from '@/config';
+import { useToast } from "@/hooks/use-toast";
 
 export function PodcastInfo() {
-  const { currentPodcast, analytics } = usePodcastStore();
+  const { toast } = useToast();
+  const { currentPodcast, analytics, updateAnalytics } = usePodcastStore();
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!currentPodcast) return;
+
+      try {
+        const response = await fetchClient(`${API_ROUTES.podcasts.base}/${currentPodcast.id}/analytics`);
+        if (!response.ok) throw new Error('Failed to fetch analytics');
+        
+        const data = await response.json();
+        updateAnalytics(data);
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load podcast analytics",
+        });
+      }
+    };
+
+    fetchAnalytics();
+  }, [currentPodcast, updateAnalytics, toast]);
 
   if (!currentPodcast) {
     return (
@@ -21,7 +61,7 @@ export function PodcastInfo() {
         <CardHeader>
           <CardTitle>No Podcast Selected</CardTitle>
           <CardDescription>
-            Select a podcast to view its details
+            Select a podcast to view its details and analytics
           </CardDescription>
         </CardHeader>
       </Card>
@@ -34,24 +74,43 @@ export function PodcastInfo() {
     return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
   };
 
+  const formatSeconds = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{currentPodcast.title}</CardTitle>
-        <CardDescription>{currentPodcast.description}</CardDescription>
+        <div className="space-y-1">
+          <CardTitle>{currentPodcast.title}</CardTitle>
+          {currentPodcast.description && (
+            <CardDescription>{currentPodcast.description}</CardDescription>
+          )}
+        </div>
       </CardHeader>
+      
       <CardContent className="space-y-6">
         {/* Progress Section */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Overall Progress</span>
-            <span className="font-medium">{Math.round(currentPodcast.currentProgress)}%</span>
+            <span className="font-medium">{Math.round(currentPodcast.current_progress)}%</span>
           </div>
-          <Progress value={currentPodcast.currentProgress} className="h-2" />
+          <Progress value={currentPodcast.current_progress} className="h-2" />
         </div>
 
-        {/* Stats Grid */}
+        <Separator />
+
+        {/* Main Stats */}
         <div className="grid grid-cols-2 gap-4">
+          {/* Duration Card */}
           <Card className="bg-muted">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -64,58 +123,131 @@ export function PodcastInfo() {
             </CardContent>
           </Card>
 
+          {/* Current Speed Card */}
           <Card className="bg-muted">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                <Badge variant="secondary">Current Speed</Badge>
+                <Badge variant="secondary">Speed</Badge>
               </div>
               <p className="mt-2 text-2xl font-bold">
-                {currentPodcast.currentSpeed}x
+                {currentPodcast.current_speed}x
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Analytics Section */}
         {analytics && (
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold">Learning Analytics</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Total Time Listened</p>
-                <p className="font-medium">
-                  {formatDuration(analytics.totalTimeListened)}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Average Speed</p>
-                <p className="font-medium">{analytics.averageSpeed}x</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Sessions</p>
-                <p className="font-medium">{analytics.numberOfSessions}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Completion Rate</p>
-                <p className="font-medium">
-                  {Math.round(analytics.completionRate * 100)}%
-                </p>
+          <>
+            <Separator />
+
+            {/* Analytics Section */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold">Learning Analytics</h4>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Total Time */}
+                <Card className="bg-muted">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Time Spent</span>
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-lg font-semibold">
+                        {formatDuration(analytics.total_time_listened)}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Sessions */}
+                <Card className="bg-muted">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Sessions</span>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-lg font-semibold">
+                        {analytics.number_of_sessions}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Average Speed */}
+                <Card className="bg-muted">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Avg Speed</span>
+                        <Play className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-lg font-semibold">
+                        {analytics.average_speed.toFixed(1)}x
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Completion Rate */}
+                <Card className="bg-muted">
+                  <CardContent className="pt-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Completion</span>
+                        <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-lg font-semibold">
+                        {Math.round(analytics.completion_rate * 100)}%
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-          </div>
+
+            <Separator />
+
+            {/* Additional Metrics */}
+            {analytics.engagement_score !== undefined && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold">Engagement Metrics</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Engagement Score</span>
+                    <span className="font-medium">{analytics.engagement_score.toFixed(1)}</span>
+                  </div>
+                  {analytics.unique_listeners && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Unique Listeners</span>
+                      <span className="font-medium">{analytics.unique_listeners}</span>
+                    </div>
+                  )}
+                  {analytics.total_plays && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total Plays</span>
+                      <span className="font-medium">{analytics.total_plays}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-col space-y-2">
-          <Button variant="outline" className="w-full">
-            <Calendar className="h-4 w-4 mr-2" />
-            View Learning History
-          </Button>
-          <Button variant="outline" className="w-full">
-            <BarChart2 className="h-4 w-4 mr-2" />
-            Detailed Analytics
-          </Button>
+        <Separator />
+
+        {/* Metadata */}
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <BookOpen className="h-4 w-4" />
+            <span>Created {formatDistanceToNow(new Date(currentPodcast.created_at), { addSuffix: true })}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <ArrowUpRight className="h-4 w-4" />
+            <span>Last updated {formatDistanceToNow(new Date(currentPodcast.updated_at), { addSuffix: true })}</span>
+          </div>
         </div>
       </CardContent>
     </Card>
