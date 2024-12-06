@@ -1,4 +1,4 @@
-name: Deploy Docker Images to GCP
+name: Deploy Docker Images in GCP
 
 on:
   workflow_run:
