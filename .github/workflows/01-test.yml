@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'backend/**'
-      - '.github/workflows/01-test.yml'
+      - '.github/workflows/**'
 
 env:
   PYTHON_VERSION: '3.12'

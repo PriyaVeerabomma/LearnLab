@@ -7,13 +7,6 @@ on:
       - completed
     branches:
       - main
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/03-deploy.yml'
-
-  
 
 env:
   GCP_HOST: '34.57.145.110'
@@ -27,6 +20,14 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+  GCP_SSH_PRIVATE_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+  PYTHON_VERSION: '3.12'
+  POETRY_VERSION: '1.7.0'
+
+
+
 
 jobs:
   deploy:
@@ -43,16 +44,24 @@ jobs:
           echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/gcp_key
           chmod 600 ~/.ssh/gcp_key
 
+      
       - name: Verify required secrets
         run: |
           required_secrets=(
-            DATABASE_URL
-            JWT_SECRET_KEY
-            JWT_ALGORITHM
+            ACCESS_TOKEN_EXPIRE_MINUTES
             AWS_ACCESS_KEY_ID
-            AWS_SECRET_ACCESS_KEY
             AWS_BUCKET_NAME
             AWS_REGION
+            AWS_SECRET_ACCESS_KEY
+            DATABASE_URL
+            DEBUG
+            DOCKER_TOKEN
+            DOCKER_USERNAME
+            ENVIRONMENT
+            GCP_SSH_PRIVATE_KEY
+            JWT_ALGORITHM
+            JWT_SECRET_KEY
+            REFRESH_TOKEN_EXPIRE_DAYS
           )
           for secret in "${required_secrets[@]}"; do
             if [ -z "${!secret}" ]; then
@@ -64,16 +73,22 @@ jobs:
       - name: Create .env file
         run: |
           cat > .env << EOL
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-          JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }}
+          ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
           AWS_REGION=${{ secrets.AWS_REGION }}
-          DEBUG=False
-          ENVIRONMENT=production
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          DEBUG=${{ secrets.DEBUG }}
+          DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}
+          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+          GCP_SSH_PRIVATE_KEY=${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          JWT_ALGORITHM=${{ secrets.JWT_ALGORITHM }}
+          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+          REFRESH_TOKEN_EXPIRE_DAYS=${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
           EOL
+
 
       - name: Deploy to GCP
         env:
