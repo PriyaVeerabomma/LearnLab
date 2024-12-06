@@ -62,4 +62,4 @@ EXPOSE 8000
 #     CMD curl -f http://localhost:8000/health || exit 1
 
 # Command for production
-CMD ["sh", "-c", "poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4 --proxy-headers"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--proxy-headers"]
