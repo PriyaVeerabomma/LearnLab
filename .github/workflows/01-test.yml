@@ -29,14 +29,39 @@ jobs:
         working-directory: ./backend
     
     steps:
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
       
+      # Step 2: Set up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          
+      
+      # Step 3: Verify required secrets
+      - name: Verify required secrets
+        run: |
+          echo "Verifying required secrets..."
+          required_secrets=(
+            DATABASE_URL
+            JWT_SECRET_KEY
+            JWT_ALGORITHM
+            AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY
+            AWS_BUCKET_NAME
+            AWS_REGION
+          )
+          for secret in "${required_secrets[@]}"; do
+            if [ -z "${!secret}" ]; then
+              echo "Error: $secret is not set!"
+              exit 1
+            else
+              echo "Verified secret: $secret"
+            fi
+          done
+          echo "All required secrets verified."
+      
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:

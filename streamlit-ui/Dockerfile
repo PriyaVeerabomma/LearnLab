@@ -1,72 +1,60 @@
-# Development Stage
-FROM python:3.9.6-slim AS development
+# Base Image for both Development and Production
+FROM python:3.9.6-slim AS base
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies and Poetry
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    curl && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
 ENV POETRY_HOME=/opt/poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
-    cd /usr/local/bin && \
-    ln -s /opt/poetry/bin/poetry && \
+    ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry && \
     poetry config virtualenvs.create false
 
-# Copy Poetry files
+# Copy Poetry configuration files
 COPY pyproject.toml poetry.lock ./
 
-# Install dependencies
+# Install common dependencies
 RUN poetry install --no-interaction --no-root
 
-# Copy application
+# ------------------------------------------
+# Development Stage
+# ------------------------------------------
+FROM base AS development
+
+# Copy application files
 COPY . .
 
-# Install application
-RUN poetry install --no-interaction
-
-# Expose port
+# Expose port for development
 EXPOSE 8501
 
-# Start development server
+# Command for development
 CMD ["poetry", "run", "streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
 
+# ------------------------------------------
 # Production Stage
-FROM python:3.9.6-slim AS production
+# ------------------------------------------
+FROM base AS production
 
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Poetry
-ENV POETRY_HOME=/opt/poetry
-RUN curl -sSL https://install.python-poetry.org | python3 - && \
-    cd /usr/local/bin && \
-    ln -s /opt/poetry/bin/poetry && \
-    poetry config virtualenvs.create false
-
-# Copy Poetry files
-COPY pyproject.toml poetry.lock ./
-
-# Install dependencies
-RUN poetry install --no-interaction --no-root --no-dev
-
-# Copy application
+# Copy application files
 COPY . .
 
-# Install application
-RUN poetry install --no-interaction --no-dev
+# Install only production dependencies
+RUN poetry install --no-dev --no-interaction
 
-# Expose port
+# Create non-root user
+RUN addgroup --system appgroup && \
+    adduser --system --group appuser && \
+    chown -R appuser:appgroup /app
+
+USER appuser
+
+# Expose port for production
 EXPOSE 8501
 
-# Start production server
+# Command for production
 CMD ["poetry", "run", "streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
