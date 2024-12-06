@@ -32,10 +32,18 @@ env:
 jobs:
   deploy:
     name: Deploy to GCP
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+      - name: Verify trigger
+        run: |
+          echo "Triggered by: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow run ID: ${{ github.run_id }}"
+          echo "Workflow run number: ${{ github.run_number }}"
+          echo "Workflow run URL: ${{ github.event.workflow_run.event.run_url }}"
+          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow run status: ${{ github.event.workflow_run.status}}"
       # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
