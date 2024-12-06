@@ -49,5 +49,5 @@ volumes:
 
 networks:
   learnlab-network:
-    name: learnlab_network_prod
+    name: learnlab_network_production
     driver: bridge
