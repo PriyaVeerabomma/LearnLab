@@ -5,9 +5,64 @@ A sophisticated RAG (Retrieval-Augmented Generation) based podcast generation sy
 ## 🌟 Features
 
 - PDF document processing and indexing using Pinecone vector database
+- Advanced semantic embedding using OpenAI's text-embedding-3-small model
+- Dynamic text splitting with RollingWindowSplitter for optimal context preservation
 - Context-aware podcast content generation using RAG architecture
 - Natural conversational script generation with two distinct speakers
 - Text-to-speech synthesis using ElevenLabs voices
+
+## 🧠 Semantic Embeddings
+
+### Why Semantic Embeddings?
+
+Our system leverages OpenAI's text-embedding-3-small model for several key advantages:
+
+1. **Semantic Understanding**:
+   - Captures meaning beyond simple keyword matching
+   - Understands context, synonyms, and related concepts
+   - Handles technical terminology and domain-specific language effectively
+
+2. **Dynamic Text Splitting**:
+   ```python
+   splitter = RollingWindowSplitter(
+       encoder=self.encoder,
+       dynamic_threshold=True,
+       min_split_tokens=100,
+       max_split_tokens=500,
+       window_size=2,
+       plot_splits=True
+   )
+   ```
+   - Maintains semantic coherence in document chunks
+   - Prevents context fragmentation
+   - Adapts split sizes based on content complexity
+
+3. **Improved Retrieval**:
+   - Higher accuracy in finding relevant content
+   - Better handling of paraphrased concepts
+   - Reduced false positives in context retrieval
+
+4. **Context Window Management**:
+   - Overlapping windows for continuous context
+   - Optimal chunk sizing for GPT model input
+   - Metadata linking for context reconstruction
+
+### Implementation Benefits
+
+1. **Accuracy**:
+   - More precise content retrieval compared to traditional keyword search
+   - Better understanding of complex technical concepts
+   - Improved handling of industry-specific terminology
+
+2. **Performance**:
+   - Fast query processing with vector operations
+   - Efficient storage and retrieval using Pinecone
+   - Scalable to large document collections
+
+3. **Content Quality**:
+   - More coherent podcast scripts
+   - Better topic selection and expansion
+   - Improved context preservation in final output
 
 ## 🛠️ Architecture
 
