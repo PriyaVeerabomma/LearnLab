@@ -12,7 +12,7 @@ class AttemptCreate(AttemptBase):
 class AttemptUpdate(BaseModel):
     end_time: Optional[datetime] = None
     score: Optional[float] = Field(None, ge=0, le=100)
-    status: Optional[str] = Field(None, regex='^(in_progress|completed)$')
+    status: Optional[str] = Field(None, pattern='^(in_progress|completed)$')
 
 class AttemptInDB(AttemptBase):
     id: UUID

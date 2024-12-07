@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, validator
 
 class QuestionBase(BaseModel):
-    question_type: str = Field(..., regex='^(multiple_choice|subjective)$')
+    question_type: str = Field(..., pattern='^(multiple_choice|subjective)$')
     content: str = Field(..., min_length=1)
     explanation: str = Field(..., min_length=1)
 

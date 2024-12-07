@@ -227,6 +227,16 @@ CREATE INDEX idx_quiz_attempts_status ON quiz_attempts(status);
 CREATE INDEX idx_question_responses_attempt_id ON question_responses(attempt_id);
 CREATE INDEX idx_question_responses_question_id ON question_responses(question_id);
 
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$
+ LANGUAGE plpgsql;
+
 -- Create triggers for updated_at
 CREATE TRIGGER update_quizzes_updated_at
     BEFORE UPDATE ON quizzes
@@ -238,89 +248,15 @@ CREATE TRIGGER update_questions_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_question_responses_updated_at
+    BEFORE UPDATE ON question_responses
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_quiz_attempts_updated_at
     BEFORE UPDATE ON quiz_attempts
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
-
--- Create views for analytics
-CREATE OR REPLACE VIEW file_quiz_stats AS
-SELECT 
-    f.id as file_id,
-    f.filename,
-    COUNT(DISTINCT q.id) as total_quizzes,
-    COUNT(DISTINCT que.id) as total_questions,
-    COUNT(DISTINCT qa.id) as total_attempts,
-    AVG(qa.score) as average_score,
-    COUNT(DISTINCT qa.user_id) as unique_participants,
-    SUM(qr.time_taken) as total_time_spent,
-    COUNT(DISTINCT qc.concept) as unique_concepts,
-    SUM(CASE WHEN que.question_type = 'multiple_choice' THEN 1 ELSE 0 END) as multiple_choice_count,
-    SUM(CASE WHEN que.question_type = 'subjective' THEN 1 ELSE 0 END) as subjective_count,
-    AVG(CASE WHEN qr.is_correct IS NOT NULL THEN qr.is_correct::int ELSE NULL END) * 100 as success_rate
-FROM files f
-LEFT JOIN quizzes q ON f.id = q.file_id
-LEFT JOIN questions que ON q.id = que.quiz_id
-LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
-LEFT JOIN question_responses qr ON qa.id = qr.attempt_id
-LEFT JOIN question_concepts qc ON que.id = qc.question_id
-WHERE q.is_active = true AND que.is_active = true
-GROUP BY f.id, f.filename;
-
--- Create function for quiz statistics
-CREATE OR REPLACE FUNCTION get_quiz_statistics(quiz_id_param UUID)
-RETURNS TABLE (
-    total_attempts INTEGER,
-    average_score FLOAT,
-    average_time_per_question INTEGER,
-    concept_success_rates JSON,
-    question_success_rates JSON
-) AS $$
-BEGIN
-    RETURN QUERY
-    WITH concept_stats AS (
-        SELECT 
-            qc.concept,
-            AVG(CASE WHEN qr.is_correct IS NOT NULL THEN qr.is_correct::int ELSE NULL END) * 100 as success_rate
-        FROM questions q
-        JOIN question_concepts qc ON q.id = qc.question_id
-        LEFT JOIN question_responses qr ON q.id = qr.question_id
-        WHERE q.quiz_id = quiz_id_param
-        GROUP BY qc.concept
-    ),
-    question_stats AS (
-        SELECT 
-            q.id,
-            q.content,
-            AVG(CASE WHEN qr.is_correct IS NOT NULL THEN qr.is_correct::int ELSE NULL END) * 100 as success_rate,
-            AVG(qr.time_taken) as avg_time
-        FROM questions q
-        LEFT JOIN question_responses qr ON q.id = qr.question_id
-        WHERE q.quiz_id = quiz_id_param
-        GROUP BY q.id, q.content
-    )
-    SELECT 
-        COUNT(DISTINCT qa.id)::INTEGER as total_attempts,
-        AVG(qa.score)::FLOAT as average_score,
-        AVG(qr.time_taken)::INTEGER as average_time_per_question,
-        (SELECT json_object_agg(concept, success_rate) FROM concept_stats) as concept_success_rates,
-        (SELECT json_object_agg(content, json_build_object('success_rate', success_rate, 'avg_time', avg_time)) 
-         FROM question_stats) as question_success_rates
-    FROM quizzes q
-    LEFT JOIN quiz_attempts qa ON q.id = qa.quiz_id
-    LEFT JOIN question_responses qr ON qa.id = qr.attempt_id
-    WHERE q.id = quiz_id_param;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
 
 -- Create triggers to automatically update updated_at
 CREATE TRIGGER update_users_updated_at
@@ -422,8 +358,6 @@ FROM podcasts p
 LEFT JOIN podcast_progress pp ON p.id = pp.podcast_id
 LEFT JOIN podcast_analytics pa ON p.id = pa.podcast_id
 GROUP BY p.id, p.title, p.total_plays;
-
--- Create useful functions
 CREATE OR REPLACE FUNCTION get_deck_statistics(deck_id_param UUID)
 RETURNS TABLE (
     total_cards INTEGER,
@@ -431,7 +365,11 @@ RETURNS TABLE (
     learning_cards INTEGER,
     mastery_percentage NUMERIC,
     distinct_pages INTEGER
-) AS $$
+) 
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    -- Declare variables if needed
 BEGIN
     RETURN QUERY
     SELECT 
@@ -446,27 +384,5 @@ BEGIN
     WHERE f.deck_id = deck_id_param
     AND f.is_active = true;
 END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION get_podcast_statistics(podcast_id_param UUID)
-RETURNS TABLE (
-    total_listeners INTEGER,
-    average_completion FLOAT,
-    total_listening_time INTEGER,
-    average_speed FLOAT,
-    engagement_score FLOAT
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        COUNT(DISTINCT pp.user_id)::INTEGER as total_listeners,
-        AVG(pp.completion_percentage)::FLOAT as average_completion,
-        SUM(pa.total_time_listened)::INTEGER as total_listening_time,
-        AVG(pa.average_speed)::FLOAT as average_speed,
-        (COUNT(DISTINCT pp.user_id) * AVG(pp.completion_percentage) / 100.0)::FLOAT as engagement_score
-    FROM podcasts p
-    LEFT JOIN podcast_progress pp ON p.id = pp.podcast_id
-    LEFT JOIN podcast_analytics pa ON p.id = pa.podcast_id
-    WHERE p.id = podcast_id_param;
-END;
-$$ LANGUAGE plpgsql;
+$$
+;
