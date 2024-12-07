@@ -64,6 +64,49 @@ Our system leverages OpenAI's text-embedding-3-small model for several key advan
    - Better topic selection and expansion
    - Improved context preservation in final output
 
+## Podcast Generation Speedup Docs: 
+
+# Groq Integration for Podcast Generation
+
+## Overview
+This integration replaces OpenAI's GPT-4 with Groq's LLama-70B model to significantly improve podcast generation speed, reducing generation time from 3 minutes to approximately 1.5-2 minutes.
+
+## Key Improvements
+
+### Speed Enhancement
+- Original GPT-4 pipeline: ~3 minutes
+- Groq-powered pipeline: ~1.5-2 minutes
+- Nearly 50% reduction in total generation time
+
+### Technical Implementation
+```python
+from langchain_groq import ChatGroq
+
+self.llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    temperature=0.7,
+    groq_api_key=GROQ_API_KEY
+)
+```
+
+### Performance Benefits
+1. **Faster Token Processing**: Groq's architecture processes tokens more efficiently
+2. **Reduced Latency**: Lower response times for each generation stage
+3. **Maintained Quality**: Similar output quality to GPT-4
+4. **Cost Efficiency**: Potentially lower API costs compared to GPT-4
+
+## Implementation Requirements
+- Groq API key in environment variables
+- Updated LangChain dependency to include Groq integration
+- No changes needed to existing prompt templates
+
+## Pipeline Optimization
+- Topic Expansion: ~30-40 seconds (previously 1 minute)
+- Script Generation: ~40-50 seconds (previously 1.5 minutes)
+- Script Refinement: ~20-30 seconds (previously 30 seconds)
+
+
+
 ## 🛠️ Architecture
 
 The system consists of four main components:
