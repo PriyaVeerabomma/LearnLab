@@ -2,6 +2,13 @@
 
 A sophisticated RAG (Retrieval-Augmented Generation) based podcast generation system that creates AI-powered podcasts from PDF documents using LangGraph, OpenAI, and ElevenLabs.
 
+
+1. **PDFProcessor**: Handles document processing and vector storage
+2. **RAGApplication**: Manages document querying and context retrieval
+3. **PodcastGenerator**: Orchestrates the podcast generation workflow
+4. **S3Storage**: Manages podcast file storage in AWS S3
+5. **SemanticCache**: Handles caching using Upstash vector database
+
 ## 🌟 Features
 
 - PDF document processing and indexing using Pinecone vector database
@@ -10,6 +17,8 @@ A sophisticated RAG (Retrieval-Augmented Generation) based podcast generation sy
 - Context-aware podcast content generation using RAG architecture
 - Natural conversational script generation with two distinct speakers
 - Text-to-speech synthesis using ElevenLabs voices
+
+
 
 ## 🧠 Semantic Embeddings
 
@@ -149,6 +158,24 @@ Core methods:
 - `synthesize_speech()`: Handles TTS generation
 - `expand_topic()`, `generate_script()`, `refine_script()`: Content generation stages
 
+#### S3Storage Class
+```python
+S3Storage(bucket_name: str)
+```
+Core methods:
+- `upload_file()`: Uploads podcast to S3 with organized structure
+- `list_podcasts()`: Retrieves available podcasts
+- `sanitize_filename()`: Ensures S3-compatible filenames
+
+Features:
+- Organized folder structure: `podcast/{pdf_title}/{podcast_title}_{timestamp}.mp3`
+- Automatic file cleanup after upload
+- PDF-based podcast filtering
+- Error handling for AWS operations
+
+
+
+
 
 ## Set up environment variables:
 ```bash
@@ -157,6 +184,12 @@ PINECONE_API_KEY=your_pinecone_key
 ELEVENLABS_API_KEY=your_elevenlabs_key
 ELEVENLABS_VOICE_ID_1=voice_id_for_speaker_1
 ELEVENLABS_VOICE_ID_2=voice_id_for_speaker_2
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_BUCKET_NAME=your_bucket_name
+GROQ_API_KEY=your_groq_api_key
+UPSTASH_VECTOR_REST_URL=your_upstash_url
+UPSTASH_VECTOR_REST_TOKEN=your_upstash_token
 ```
 
 Available commands:
@@ -180,7 +213,6 @@ The podcast generation follows this pipeline:
 
 ## ⚠️ Changes to add still 
 
-- Implement multiple LLM's Instead of single and Use Groq for Faster Response
 - Tweak the prompt 
 - Add Prompt Cacheing
 

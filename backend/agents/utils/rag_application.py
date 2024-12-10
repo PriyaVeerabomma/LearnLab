@@ -5,6 +5,7 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from pdf_processor import PDFProcessor 
 from typing import List, Dict, Any, Optional  
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
@@ -17,11 +18,12 @@ class RAGApplication:
         if not openai_api_key or not pinecone_api_key:
             raise ValueError("Missing API keys. Check your .env file.")
             
-        self.llm = ChatOpenAI(
-            model_name="gpt-4o-mini",
-            temperature=0.7,
-            openai_api_key=openai_api_key
-        )
+        # self.llm = ChatOpenAI(
+        #     model_name="gpt-4o-mini",
+        #     temperature=0.7,
+        #     openai_api_key=openai_api_key
+        # )
+        self.llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7, groq_api_key=GROQ_API_KEY)
         self.pdf_processor = PDFProcessor(
             openai_api_key=openai_api_key,
             pinecone_api_key=pinecone_api_key
