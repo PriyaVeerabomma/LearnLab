@@ -1,3 +1,4 @@
+
 import os
 import json
 import requests
@@ -13,10 +14,11 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.output_parsers import PydanticOutputParser
 from utils.rag_application import RAGApplication
 from langchain_groq import ChatGroq
-import os
-from utils.podcast_s3_storage import S3Storage
 from datetime import datetime
-import json 
+
+from utils.podcast_s3_storage import S3Storage
+from utils.semantic_cache import PodcastCache
+
 
 load_dotenv()
 
@@ -102,7 +104,6 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 class PodcastGenerator:
     def __init__(self):
         self.llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7, groq_api_key=GROQ_API_KEY)
-        self.llm_script_refinement = ChatGroq(model="llama-3.1-8b-instant", temperature=0.7, groq_api_key=GROQ_API_KEY)
         self.rag_app = RAGApplication()
         self.elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
         self.voice_ids = {
@@ -222,14 +223,13 @@ class PodcastGenerator:
     def refine_script(self, state: GraphState) -> GraphState:
         prompt = ChatPromptTemplate.from_template(REFINE_SCRIPT_PROMPT)
         formatted_prompt = prompt.format_messages(script=state.script)
-        response = self.llm_script_refinement.invoke(formatted_prompt)
+        response = self.llm.invoke(formatted_prompt)
         
         state.script = response.content
         state.messages.append(AIMessage(content=response.content))
         state.current_stage = "script_refinement"
         return state
-
-
+    
     def generate_tts(self, state: GraphState) -> GraphState:
         if not state.script:
             raise ValueError("No script available for TTS generation.")
@@ -316,6 +316,7 @@ class PodcastGenerator:
                 "evidence": final_state["rag_context"].evidence
             }
         }
+    
 
     def parse_unstructured_script(self, script_text: str) -> PodcastScript:
         segments = []
@@ -365,9 +366,34 @@ class PodcastGenerator:
     def list_available_pdfs(self) -> List[str]:
         """Get list of available indexed PDFs"""
         return self.rag_app.list_available_pdfs()
-
+    
     def generate_podcast(self, question: str, pdf_title: str) -> Dict[str, Any]:
-        """Generate a podcast from a question and PDF"""
+        """Generate a podcast with caching"""
+        # Check cache first
+        cached_result = self.cache.get_cached_podcast(question, pdf_title)
+        
+        if cached_result:
+            print(f"Found cached podcast! S3 URL: {cached_result['s3_url']}")
+            return {
+                **cached_result,
+                'cached': True
+            }
+        
+        # If not in cache, generate new podcast
+        print("No cached version found. Generating new podcast...")
+        result = self._generate_new_podcast(question, pdf_title)
+        
+        # Cache the result
+        if result.get('s3_url'):  # Only cache if generation was successful
+            self.cache.cache_podcast(question, pdf_title, result)
+            
+        return {
+            **result,
+            'cached': False
+        }
+
+    def _generate_new_podcast(self, question: str, pdf_title: str) -> Dict[str, Any]:
+        """Internal method for generating new podcast"""
         graph = self.create_graph()
         
         initial_state = GraphState(
@@ -384,11 +410,19 @@ class PodcastGenerator:
         
         final_state = graph.invoke(initial_state)
         
+        # Get the S3 URL from the last message
+        s3_url = None
+        for message in reversed(final_state["messages"]):
+            if "uploaded to S3:" in message.content:
+                s3_url = message.content.split("uploaded to S3: ")[-1]
+                break
+        
         return {
             "topic": question,
             "script": final_state["script"],
             "conversation_history": [m.content for m in final_state["messages"]],
             "source_pdf": pdf_title,
+            "s3_url": s3_url,
             "rag_context": {
                 "answer": final_state["rag_context"].answer,
                 "evidence": final_state["rag_context"].evidence
@@ -429,6 +463,7 @@ def handle_index_document(generator: PodcastGenerator):
     except Exception as e:
         print(f"Error processing document: {str(e)}")
 
+# Modify the main handler function
 def handle_podcast_generation(generator: PodcastGenerator):
     pdfs = generator.list_available_pdfs()
     if not pdfs:
@@ -451,26 +486,23 @@ def handle_podcast_generation(generator: PodcastGenerator):
             
     question = input("\nEnter your question about the document: ").strip()
     
-    print(f"\nGenerating podcast for question: {question}")
+    print(f"\nProcessing query: {question}")
     print(f"Using PDF: {selected_pdf}")
     
     result = generator.generate_podcast(question, selected_pdf)
     
-    if "error" in result:
-        print(f"\nError: {result['error']}")
-        return
-        
-    print("\nPodcast Generation Complete!")
-    print(f"\nSource PDF: {result['source_pdf']}")
-    print("\nScript:")
-    print("-" * 50)
-    print(result["script"])
+    if result.get('cached'):
+        print("\nRetrieved cached podcast!")
+        print(f"S3 URL: {result['s3_url']}")
+    else:
+        print("\nGenerated new podcast!")
+        print(f"S3 URL: {result['s3_url']}")
     
-    with open("rag_podcast_output.json", "w") as f:
+    # Save result to local file for reference
+    with open("podcast_output.json", "w") as f:
         json.dump(result, f, indent=2)
         
-    print("\nResults saved to rag_podcast_output.json")
-    print("Audio saved as podcast_episode.mp3")
+    print("\nResults saved to podcast_output.json")
 
 def main():
     try:
@@ -508,4 +540,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

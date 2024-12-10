@@ -173,6 +173,22 @@ Features:
 - PDF-based podcast filtering
 - Error handling for AWS operations
 
+#### PodcastCache Class
+```python
+PodcastCache()
+```
+Core methods:
+- `get_cached_podcast()`: Retrieves cached podcast based on similar queries
+- `cache_podcast()`: Stores podcast data with metadata
+- `clear_cache()`: Removes all cached entries
+- `generate_cache_key()`: Creates unique keys for query-document pairs
+
+Features:
+- Semantic similarity matching (85% threshold)
+- Automatic timestamp tracking
+- JSON serialization for data storage
+- Error handling for cache operations
+
 
 
 
@@ -201,11 +217,16 @@ Available commands:
 ## 🔄 Workflow
 
 The podcast generation follows this pipeline:
-1. Document indexing and RAG context retrieval
-2. Topic expansion and outline creation
-3. Script generation with two speakers
-4. Script refinement and natural language enhancement
-5. Text-to-speech synthesis
+1. Check semantic cache for similar queries
+2. Return cached podcast if found (includes S3 URL)
+3. If no cache hit:
+   - Document indexing and RAG context retrieval
+   - Topic expansion and outline creation
+   - Script generation with two speakers
+   - Script refinement and language enhancement
+   - Text-to-speech synthesis
+   - S3 storage with organized structure
+   - Cache the generated podcast data
 
 ## 📊 Visualization
 
@@ -214,11 +235,12 @@ The podcast generation follows this pipeline:
 ## ⚠️ Changes to add still 
 
 - Tweak the prompt 
-- Add Prompt Cacheing
-
+- Make Final Changes
 ## 🙏 Acknowledgments
 
 - LangChain for the RAG framework
 - OpenAI for language models
 - ElevenLabs for text-to-speech
 - Pinecone for vector storage
+- Upstash for Semantic Cacheing
+  
