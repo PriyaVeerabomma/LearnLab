@@ -76,6 +76,7 @@ async def login(
     )
     db.add(db_session)
     db.commit()
+    
 
     return {
         "access_token": access_token,
