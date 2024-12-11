@@ -114,38 +114,12 @@ jobs:
             echo ".env file created successfully."
           fi
 
-      # Step 5: Clean up old Docker images
-      - name: Clean up old Docker images
-        env:
-          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
-        run: |
-          echo "Cleaning up old Docker images on GCP..."
-          ${{ env.SSH_COMMAND }} '
-            docker image prune -a -f || {
-              echo "Error: Failed to clean up old Docker images."
-              exit 1
-            }
-          '
-          echo "Old Docker images cleaned up successfully."
-
-      # Step 6: Deploy to GCP
-      - name: Deploy to GCP
+      # Step 5: Verify and Install Docker and Docker-compose in GCP
+      - name: Docker Installation
         env:
           SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
           SCP_COMMAND: "scp -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no"
         run: |
-          # Create deployment directory
-          echo "Starting deployment process..."
-
-          # Create deployment directory
-          echo "Creating deployment directory on GCP..."
-          ${{ env.SSH_COMMAND }} "mkdir -p ${{ env.DEPLOYMENT_PATH }}" || {
-            echo "Error: Failed to create deployment directory."
-            exit 1
-          }
-          echo "Deployment directory created successfully."          
-
-
           # Check and install Docker and Docker Compose
           echo "Checking and installing Docker and Docker Compose on GCP..."
           ${{ env.SSH_COMMAND }} '
@@ -177,6 +151,37 @@ jobs:
           }
           echo "Docker and Docker Compose are ready."
 
+      # Step 6: Clean up old Docker images
+      - name: Clean up old Docker images
+        env:
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+        run: |
+          echo "Cleaning up old Docker images on GCP..."
+          ${{ env.SSH_COMMAND }} '
+            docker image prune -a -f || {
+              echo "Error: Failed to clean up old Docker images."
+              exit 1
+            }
+          '
+          echo "Old Docker images cleaned up successfully."
+
+      # Step 7: Deploy to GCP
+      - name: Deploy to GCP
+        env:
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+          SCP_COMMAND: "scp -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no"
+        run: |
+          # Create deployment directory
+          echo "Starting deployment process..."
+
+          # Create deployment directory
+          echo "Creating deployment directory on GCP..."
+          ${{ env.SSH_COMMAND }} "mkdir -p ${{ env.DEPLOYMENT_PATH }}" || {
+            echo "Error: Failed to create deployment directory."
+            exit 1
+          }
+          echo "Deployment directory created successfully."          
+
           # Copy files to GCP
           echo "Copying docker-compose.prod.yml to GCP..."
           ${{ env.SCP_COMMAND }} docker-compose.prod.yml ${{ env.GCP_USER }}@${{ env.GCP_HOST }}:${{ env.DEPLOYMENT_PATH }}/ || {
@@ -202,7 +207,7 @@ jobs:
           }
           echo "Deployment completed successfully."
       
-      # Step 7: Verify Deployment    
+      # Step 8: Verify Deployment    
       - name: Verify Deployment
         env:
           SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
