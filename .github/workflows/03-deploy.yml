@@ -1,5 +1,4 @@
 name: 3. Deploy Docker Images in GCP
-## TODO: Clean the docker images in GCP before deploying new images
 on:
   workflow_run:
     workflows: ["2. Build and Push Docker Images to Docker Hub"]
@@ -10,7 +9,7 @@ on:
 
 env:
   GCP_HOST: ${{ secrets.GCP_HOST }}
-  GCP_USER: ${{ secrets.GCP_USER }}
+  GCP_USERNAME: ${{ secrets.GCP_USERNAME }}
   DEPLOYMENT_PATH: '~/learnlab'
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
@@ -117,7 +116,7 @@ jobs:
       # Step 5: Verify and Install Docker and Docker-compose in GCP
       - name: Docker Installation
         env:
-          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}"
           SCP_COMMAND: "scp -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no"
         run: |
           # Check and install Docker and Docker Compose
@@ -154,7 +153,7 @@ jobs:
       # Step 6: Clean up old Docker images
       - name: Clean up old Docker images
         env:
-          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}"
         run: |
           echo "Cleaning up old Docker images on GCP..."
           ${{ env.SSH_COMMAND }} '
@@ -168,7 +167,7 @@ jobs:
       # Step 7: Deploy to GCP
       - name: Deploy to GCP
         env:
-          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}"
           SCP_COMMAND: "scp -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no"
         run: |
           # Create deployment directory
@@ -184,14 +183,14 @@ jobs:
 
           # Copy files to GCP
           echo "Copying docker-compose.prod.yml to GCP..."
-          ${{ env.SCP_COMMAND }} docker-compose.prod.yml ${{ env.GCP_USER }}@${{ env.GCP_HOST }}:${{ env.DEPLOYMENT_PATH }}/ || {
+          ${{ env.SCP_COMMAND }} docker-compose.prod.yml ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}:${{ env.DEPLOYMENT_PATH }}/ || {
             echo "Error: Failed to copy docker-compose.prod.yml."
             exit 1
           }
           echo "docker-compose.prod.yml copied successfully."
 
           echo "Copying .env file to GCP..."
-          ${{ env.SCP_COMMAND }} .env ${{ env.GCP_USER }}@${{ env.GCP_HOST }}:${{ env.DEPLOYMENT_PATH }}/ || {
+          ${{ env.SCP_COMMAND }} .env ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}:${{ env.DEPLOYMENT_PATH }}/ || {
             echo "Error: Failed to copy .env file."
             exit 1
           }
@@ -210,7 +209,7 @@ jobs:
       # Step 8: Verify Deployment    
       - name: Verify Deployment
         env:
-          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}"
         run: |
           echo "Verifying deployment..."
           sleep 30  # Wait for services to start
