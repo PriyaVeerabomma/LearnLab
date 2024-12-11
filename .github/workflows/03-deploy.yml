@@ -132,6 +132,7 @@ jobs:
               sudo apt install -y docker-ce docker-ce-cli containerd.io &&
               sudo systemctl enable docker &&
               sudo systemctl start docker
+              sudo usermod -aG docker $USER
             else
               echo "Docker is already installed."
             fi
@@ -187,14 +188,14 @@ jobs:
             echo "Error: Failed to copy docker-compose.prod.yml."
             exit 1
           }
-          echo "docker-compose.prod.yml copied successfully."
+          echo "docker-compose.prod.yml copied successfully to GCP."
 
           echo "Copying .env file to GCP..."
           ${{ env.SCP_COMMAND }} .env ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}:${{ env.DEPLOYMENT_PATH }}/ || {
             echo "Error: Failed to copy .env file."
             exit 1
           }
-          echo ".env file copied successfully."
+          echo ".env file copied successfully to GCP."
 
           # Deploy using Docker Compose
           echo "Deploying services on GCP..."
