@@ -1,5 +1,5 @@
-name: Deploy Docker Images in GCP
-
+name: 3. Deploy Docker Images in GCP
+## TODO: Clean the docker images in GCP before deploying new images
 on:
   workflow_run:
     workflows: ["2. Build and Push Docker Images to Docker Hub"]
@@ -9,8 +9,8 @@ on:
       - main
 
 env:
-  GCP_HOST: '34.57.145.110'
-  GCP_USER: 'udaykiran'
+  GCP_HOST: ${{ secrets.GCP_HOST }}
+  GCP_USER: ${{ secrets.GCP_USER }}
   DEPLOYMENT_PATH: '~/learnlab'
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
@@ -114,7 +114,21 @@ jobs:
             echo ".env file created successfully."
           fi
 
-      # Step 5: Deploy to GCP
+      # Step 5: Clean up old Docker images
+      - name: Clean up old Docker images
+        env:
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+        run: |
+          echo "Cleaning up old Docker images on GCP..."
+          ${{ env.SSH_COMMAND }} '
+            docker image prune -a -f || {
+              echo "Error: Failed to clean up old Docker images."
+              exit 1
+            }
+          '
+          echo "Old Docker images cleaned up successfully."
+
+      # Step 6: Deploy to GCP
       - name: Deploy to GCP
         env:
           SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
@@ -188,7 +202,7 @@ jobs:
           }
           echo "Deployment completed successfully."
       
-      # Step 6: Verify Deployment    
+      # Step 7: Verify Deployment    
       - name: Verify Deployment
         env:
           SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
