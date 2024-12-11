@@ -1,5 +1,4 @@
 name: 3. Deploy Docker Images in GCP
-## TODO: Clean the docker images in GCP before deploying new images
 on:
   workflow_run:
     workflows: ["2. Build and Push Docker Images to Docker Hub"]
