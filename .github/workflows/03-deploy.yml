@@ -114,7 +114,44 @@ jobs:
             echo ".env file created successfully."
           fi
 
-      # Step 5: Clean up old Docker images
+      # Step 5: Verify and Install Docker and Docker-compose in GCP
+      - name: Docker Installation
+        env:
+          SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
+          SCP_COMMAND: "scp -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no"
+        run: |
+          # Check and install Docker and Docker Compose
+          echo "Checking and installing Docker and Docker Compose on GCP..."
+          ${{ env.SSH_COMMAND }} '
+            if ! command -v docker &> /dev/null || ! docker --version | grep -q "20."; then
+              echo "Docker not found or outdated. Installing Docker..."
+              sudo apt update &&
+              sudo apt install -y apt-transport-https ca-certificates curl gnupg2 software-properties-common &&
+              curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor --batch --yes -o /usr/share/keyrings/docker-archive-keyring.gpg &&
+              echo "deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null &&
+              sudo apt update &&
+              sudo apt install -y docker-ce docker-ce-cli containerd.io &&
+              sudo systemctl enable docker &&
+              sudo systemctl start docker
+            else
+              echo "Docker is already installed."
+            fi
+            
+            if ! command -v docker-compose &> /dev/null || ! docker-compose --version | grep -q "v2.21.0"; then
+              echo "Docker Compose not found or outdated. Installing Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-linux-aarch64" -o /usr/local/bin/docker-compose &&
+              sudo chmod +x /usr/local/bin/docker-compose &&
+              docker-compose --version
+            else
+              echo "Docker Compose is already installed."
+            fi
+          ' || {
+            echo "Error: Docker or Docker Compose installation failed."
+            exit 1
+          }
+          echo "Docker and Docker Compose are ready."
+
+      # Step 6: Clean up old Docker images
       - name: Clean up old Docker images
         env:
           SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USER }}@${{ env.GCP_HOST }}"
