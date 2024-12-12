@@ -16,11 +16,16 @@ import { useToast } from '@/hooks/use-toast';
 import { API_ROUTES } from '@/config';
 import { fetchClient } from '@/lib/api/fetch-client';
 import { useRouter } from 'next/navigation';
+import { FileResponse } from '@/types/file';
 
 export function FileGrid() {
   const { files, setFiles, removeFile, setSelectedFile } = useFileStore();
   const { toast } = useToast();
   const router = useRouter();
+  const handleCardClick = (file: FileResponse) => {
+    setSelectedFile
+    router.push(`/dashboard/${file.id}`);
+  };
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -92,7 +97,7 @@ export function FileGrid() {
         <Card 
           key={file.id} 
           className="hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setSelectedFile(file)}
+          onClick={() => handleCardClick(file)}
         >
           <CardHeader>
             <CardTitle className="text-lg truncate">

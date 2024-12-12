@@ -4,6 +4,8 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { AuthProvider } from '@/components/providers/auth-provider';
+import { WebSocketProvider } from '@/components/providers/websocket-provider';
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,7 +24,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
+            <WebSocketProvider>
+              {children}
+              <Toaster />
+            </WebSocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
