@@ -15,6 +15,7 @@ export const API_ROUTES = {
     get: (id: string) => `${API_BASE_URL}/api/podcasts/${id}`,
   },
   flashcards: {
+    get_decks: `{API_BASE_URL}/api/flashcards/decks`,
     base: `${API_BASE_URL}/api/flashcards`,
     list: `${API_BASE_URL}/api/flashcards`,
     get: (id: string) => `${API_BASE_URL}/api/flashcards/${id}`,
