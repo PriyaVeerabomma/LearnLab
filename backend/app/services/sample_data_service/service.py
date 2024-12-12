@@ -53,9 +53,9 @@ class SampleDataService:
             # Create learning content for each file
             for file in files:
                 # Create flashcards
-                # decks, cards = await self._create_flashcard_content(user_id, file.id)
-                # summary["flashcard_decks"] += decks
-                # summary["total_cards"] += cards
+                decks, cards = await self._create_flashcard_content(user_id, file.id)
+                summary["flashcard_decks"] += decks
+                summary["total_cards"] += cards
                 
                 # # Create quizzes
                 quizzes, questions = await self._create_quiz_content(user_id, file.id)

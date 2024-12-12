@@ -30,6 +30,9 @@ class FlashcardService:
 
     def get_user_decks(self, user_id: UUID) -> List[DeckWithFile]:
         return self.deck_service.get_user_decks(user_id)
+    
+    def get_user_file_decks(self, user_id: UUID, file_id: UUID) -> List[DeckWithFile]:
+        return self.deck_service.get_user_decks(user_id, file_id)
 
     def create_deck(self, user_id: UUID, deck_data: DeckCreate) -> FlashcardDeck:
         return self.deck_service.create_deck(user_id, deck_data)
@@ -53,8 +56,8 @@ class FlashcardService:
     def delete_flashcard(self, card_id: UUID) -> bool:
         return self.card_service.delete_flashcard(card_id)
 
-    def get_cards_by_page(self, deck_id: UUID, page_number: int) -> List[Flashcard]:
-        return self.card_service.get_cards_by_page(deck_id, page_number)
+    def get_cards_by_page(self, deck_id: UUID) -> List[Flashcard]:
+        return self.card_service.get_cards_by_page(deck_id)
 
     # Review-related methods
     def get_due_cards(self, user_id: UUID, deck_id: Optional[UUID] = None) -> List[Flashcard]:
