@@ -51,6 +51,11 @@ dist/
 backend/logs*
 backend/logs/*
 backend/logs/2024-12-01_app.log
+
+
+# Secrets
+blogger_api.json
+
 docker/postgres/quiz/00_cleanup.sql
 docker/postgres/quiz/01_quizzes.sql
 docker/postgres/quiz/02_questions.sql
@@ -77,3 +82,4 @@ backend/sample_data/transcripts/deep_learning_basics.txt
 backend/sample_data/transcripts/deep_learning_basics.vtt
 backend/sample_data/transcripts/ml_introduction.txt
 backend/sample_data/transcripts/ml_introduction.vtt
+
