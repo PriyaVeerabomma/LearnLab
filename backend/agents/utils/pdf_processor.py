@@ -282,3 +282,33 @@ class PDFProcessor:
         except Exception as e:
             print(f"Error deleting index: {str(e)}")
             return False
+        
+    async def delete_document_by_file_id(self, file_id: str) -> bool:
+        """Delete all vectors associated with a file ID using ID-based deletion."""
+        try:
+            if not self.index:
+                raise ValueError("Index not initialized.")
+
+            # First, query to get all vector IDs associated with this file
+            # We'll use a dummy vector for the query
+            response = self.index.query(
+                vector=[0] * self.dims,
+                top_k=10000,  # Large enough to get all chunks
+                include_metadata=True
+            )
+
+            # Filter matches to find those associated with our file_id
+            chunk_ids = []
+            for match in response.matches:
+                if match.metadata.get("file_id") == file_id:
+                    chunk_ids.append(match.id)
+
+            if chunk_ids:
+                # Delete vectors by their IDs
+                self.index.delete(ids=chunk_ids)
+                return True
+            return False
+
+        except Exception as e:
+            logger.error(f"Error deleting vectors for file {file_id}: {str(e)}")
+            return False

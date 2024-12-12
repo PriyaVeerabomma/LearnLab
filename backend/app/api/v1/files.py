@@ -170,6 +170,8 @@ async def process_pdf_embeddings(file_path: str, file_id: UUID, user_id: UUID):
 #         except Exception as e:
 #             logger.error(f"Failed to clean up temporary file {file_path}: {str(e)}")
 
+
+
 @router.post("/upload", response_model=FileResponse)
 async def upload_file(
     file: UploadFile,
@@ -327,6 +329,7 @@ async def get_file(
         })
         raise HTTPException(status_code=500, detail="Failed to retrieve file")
 
+
 @router.delete("/files/{file_id}")
 async def delete_file(
     file_id: UUID,
@@ -334,7 +337,7 @@ async def delete_file(
     db: Session = Depends(get_db)
 ):
     """
-    Delete a file (soft delete in database, remove from S3, and remove from vector database)
+    Delete a file (soft delete in database, remove from S3, and remove from vector database if processed)
     """
     logger.info(f"Delete request for file {file_id} from user {current_user.id}")
 
@@ -350,27 +353,82 @@ async def delete_file(
             raise HTTPException(status_code=404, detail="File not found")
 
         try:
-            # Delete from S3
-            await s3_service.delete_file(file.s3_key)
-            logger.debug(f"Deleted file {file_id} from S3")
+            # Send deletion started notification
+            await notification_manager.send_notification_with_retry(
+                current_user.id,
+                {
+                    "type": "info",
+                    "message": "Starting file deletion process",
+                    "file_id": str(file_id),
+                    "status": "deleting"
+                }
+            )
 
-            # Delete from vector database
-            # Assuming we store chunks with metadata containing the file_id
-            filter_dict = {"file_id": str(file_id)}
-            if hasattr(pdf_processor.index, 'delete') and callable(pdf_processor.index.delete):
-                await pdf_processor.index.delete(filter=filter_dict)
-                logger.debug(f"Deleted embeddings for file {file_id} from vector database")
+            deletion_details = []
+            
+            # Delete from S3
+            try:
+                await s3_service.delete_file(file.s3_key)
+                logger.debug(f"Deleted file {file_id} from S3")
+                deletion_details.append("S3 storage")
+            except Exception as s3_error:
+                logger.error(f"Failed to delete from S3: {str(s3_error)}")
+                raise
+
+            # Attempt to delete from vector database
+            try:
+                vector_deletion_success = await pdf_processor.delete_document_by_file_id(str(file_id))
+                if vector_deletion_success:
+                    logger.debug(f"Deleted embeddings for file {file_id} from vector database")
+                    deletion_details.append("vector database")
+                else:
+                    logger.warning(f"No embeddings found to delete for file {file_id} - file may not have been processed yet")
+            except Exception as vector_error:
+                logger.error(f"Error during vector deletion: {str(vector_error)}")
+                # Continue with deletion even if vector deletion fails
 
             # Soft delete in database
             file.is_deleted = True
             db.commit()
             logger.info(f"Successfully deleted file {file_id}")
+            deletion_details.append("database")
 
-            return {"message": "File deleted successfully"}
+            # Prepare success message based on what was deleted
+            deletion_locations = " and ".join(deletion_details)
+            success_message = f"File successfully removed from {deletion_locations}"
+
+            # Send success notification
+            await notification_manager.send_notification_with_retry(
+                current_user.id,
+                {
+                    "type": "success",
+                    "message": success_message,
+                    "file_id": str(file_id),
+                    "status": "deleted",
+                    "deletion_details": deletion_details
+                }
+            )
+
+            return {
+                "message": success_message,
+                "deletion_details": deletion_details
+            }
 
         except Exception as e:
             # Rollback database changes if deletion fails
             db.rollback()
+            
+            # Send error notification
+            await notification_manager.send_notification_with_retry(
+                current_user.id,
+                {
+                    "type": "error",
+                    "message": f"Failed to delete file: {str(e)}",
+                    "file_id": str(file_id),
+                    "status": "error"
+                }
+            )
+            
             log_error(logger, e, {
                 'file_id': str(file_id),
                 'user_id': str(current_user.id),
@@ -387,4 +445,3 @@ async def delete_file(
             'operation': 'delete_file'
         })
         raise HTTPException(status_code=500, detail="Failed to process delete request")
-
