@@ -1,3 +1,4 @@
+
 import os
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
@@ -5,9 +6,10 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from pdf_processor import PDFProcessor 
 from typing import List, Dict, Any, Optional  
-from langchain_groq import ChatGroq
 
 load_dotenv()
+
+gemini_api_key = os.getenv("GEMINI_API_KEY")
 
 class RAGApplication:
     def __init__(self):
@@ -17,20 +19,15 @@ class RAGApplication:
         
         if not openai_api_key or not pinecone_api_key:
             raise ValueError("Missing API keys. Check your .env file.")
-            
-        # self.llm = ChatOpenAI(
-        #     model_name="gpt-4o-mini",
-        #     temperature=0.7,
-        #     openai_api_key=openai_api_key
-        # )
-        self.llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7, groq_api_key=GROQ_API_KEY)
+
+        self.llm = ChatOpenAI(model="learnlm-1.5-pro-experimental",base_url="https://generativelanguage.googleapis.com/v1beta/openai/", temperature=0.7, api_key=gemini_api_key)
         self.pdf_processor = PDFProcessor(
             openai_api_key=openai_api_key,
             pinecone_api_key=pinecone_api_key
         )
         
         # Create Pinecone index
-        self.pdf_processor.create_index("pdf-embeddings-testing-multiple-new")
+        self.pdf_processor.create_index("pdf-embeddings-123123123")
         
         # Track current PDF context
         self.current_pdf = None
@@ -125,7 +122,7 @@ def main():
         print("\nProcessing documents...")
         # Add your PDF files here - update these paths to your actual PDF locations
         pdf_files = [
-            "textbook.pdf",
+            "/Users/akashvarun/Data-Science/ai-podcast/textbook.pdf",
             "/Users/akashvarun/Northeastern/ebooks/Databricks_Book-of-MLOps-2nd-Edition.pdf"
         ]
         

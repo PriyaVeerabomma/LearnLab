@@ -230,12 +230,12 @@ The podcast generation follows this pipeline:
 
 ## 📊 Visualization
 
-![Podcast Agent v1](/assets/podcast_agent_v1.png)
+![Podcast Agent v1](/assets/podcast_agent_v2.png)
 
 ## ⚠️ Changes to add still 
 
 - Tweak the prompt 
-- Make Final Changes
+
 ## 🙏 Acknowledgments
 
 - LangChain for the RAG framework
