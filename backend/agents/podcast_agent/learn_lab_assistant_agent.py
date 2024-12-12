@@ -63,8 +63,6 @@ class IntegratedContentGenerator:
 def route_by_output_type(state: EnhancedGraphState) -> str:
     return state.output_type
 
-
-
 TOPIC_EXPANSION_PROMPT = """You are an expert podcast planner. Create a detailed outline for a 3-5 minute 
 podcast discussion between two speakers using the provided research context.
 
