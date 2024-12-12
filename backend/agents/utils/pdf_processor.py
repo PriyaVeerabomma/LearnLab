@@ -17,7 +17,7 @@ load_dotenv()
 class PDFProcessor:
     def __init__(self, openai_api_key: str, pinecone_api_key: str):
         """Initialize the PDF processor with necessary components."""
-        os.environ["OPENAI_API_KEY"] = openai_api_key
+        openai_api_key = os.getenv("OPENAI_API_KEY")
         self.encoder = OpenAIEncoder(name="text-embedding-3-small")
         logger.setLevel("WARNING")
         
@@ -30,13 +30,13 @@ class PDFProcessor:
             min_split_tokens=100,
             max_split_tokens=500,
             window_size=2,
-            plot_splits=True,
+            # plot_splits=True,
             enable_statistics=True
         )
         
         self.index = None
 
-    def create_index(self, index_name: str = "pdf-embeddings-semantic-testing"):
+    def create_index(self, index_name: str = "learn-lab-indexing"):
         """Create and initialize Pinecone index."""
         # Setup serverless specification
         spec = ServerlessSpec(cloud="aws", region="us-east-1")
