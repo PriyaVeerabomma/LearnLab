@@ -276,6 +276,66 @@ async def upload_file(
         })
         raise HTTPException(status_code=500, detail="Failed to process file upload")
     
+@router.get("/files", response_model=List[FileResponse])
+async def list_files(    
+    current_user: User = Depends(get_current_user),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100), 
+    db: Session = Depends(get_db),    
+):
+    """
+    List all files uploaded by the current user
+    """
+    logger.info(f"Listing files for user {current_user.id}. Skip: {skip}, Limit: {limit}")
+
+
+    try:
+        files = db.query(FileModel).filter(
+            FileModel.user_id == current_user.id,
+            FileModel.is_deleted == False
+        ).offset(skip).limit(limit).all()
+        
+        logger.debug(f"Found {len(files)} files")
+
+        # Generate download URLs for each file
+        responses = []
+        for file in files:
+            try:
+                download_url = await s3_service.generate_presigned_url(file.s3_key)
+                responses.append(
+                    FileResponse(
+                        id=file.id,
+                        filename=file.filename,
+                        file_size=file.file_size,
+                        mime_type=file.mime_type,
+                        created_at=file.created_at,
+                        updated_at=file.updated_at,
+                        download_url=download_url
+                    )
+                )
+            except Exception as e:
+                log_error(logger, e, {
+                    'file_id': str(file.id),
+                    'operation': 'generate_url'
+                })
+                # Continue with other files even if one fails
+                continue        
+
+        return responses
+
+    except SQLAlchemyError as e:
+        log_error(logger, e, {
+            'user_id': str(current_user.id),
+            'operation': 'list_files'
+        })
+        raise HTTPException(status_code=500, detail="Database error occurred")
+    except Exception as e:
+        log_error(logger, e, {
+            'user_id': str(current_user.id),
+            'operation': 'list_files'
+        })
+        raise HTTPException(status_code=500, detail="Failed to retrieve files")
+
 @router.get("/files/{file_id}", response_model=FileResponse)
 async def get_file(
     file_id: UUID,
@@ -329,7 +389,6 @@ async def get_file(
         })
         raise HTTPException(status_code=500, detail="Failed to retrieve file")
 
-
 @router.delete("/files/{file_id}")
 async def delete_file(
     file_id: UUID,
@@ -337,7 +396,7 @@ async def delete_file(
     db: Session = Depends(get_db)
 ):
     """
-    Delete a file (soft delete in database, remove from S3, and remove from vector database if processed)
+    Delete a file (soft delete in database and remove from S3)
     """
     logger.info(f"Delete request for file {file_id} from user {current_user.id}")
 
@@ -353,82 +412,20 @@ async def delete_file(
             raise HTTPException(status_code=404, detail="File not found")
 
         try:
-            # Send deletion started notification
-            await notification_manager.send_notification_with_retry(
-                current_user.id,
-                {
-                    "type": "info",
-                    "message": "Starting file deletion process",
-                    "file_id": str(file_id),
-                    "status": "deleting"
-                }
-            )
-
-            deletion_details = []
-            
             # Delete from S3
-            try:
-                await s3_service.delete_file(file.s3_key)
-                logger.debug(f"Deleted file {file_id} from S3")
-                deletion_details.append("S3 storage")
-            except Exception as s3_error:
-                logger.error(f"Failed to delete from S3: {str(s3_error)}")
-                raise
-
-            # Attempt to delete from vector database
-            try:
-                vector_deletion_success = await pdf_processor.delete_document_by_file_id(str(file_id))
-                if vector_deletion_success:
-                    logger.debug(f"Deleted embeddings for file {file_id} from vector database")
-                    deletion_details.append("vector database")
-                else:
-                    logger.warning(f"No embeddings found to delete for file {file_id} - file may not have been processed yet")
-            except Exception as vector_error:
-                logger.error(f"Error during vector deletion: {str(vector_error)}")
-                # Continue with deletion even if vector deletion fails
+            await s3_service.delete_file(file.s3_key)
+            logger.debug(f"Deleted file {file_id} from S3")
 
             # Soft delete in database
             file.is_deleted = True
             db.commit()
             logger.info(f"Successfully deleted file {file_id}")
-            deletion_details.append("database")
 
-            # Prepare success message based on what was deleted
-            deletion_locations = " and ".join(deletion_details)
-            success_message = f"File successfully removed from {deletion_locations}"
-
-            # Send success notification
-            await notification_manager.send_notification_with_retry(
-                current_user.id,
-                {
-                    "type": "success",
-                    "message": success_message,
-                    "file_id": str(file_id),
-                    "status": "deleted",
-                    "deletion_details": deletion_details
-                }
-            )
-
-            return {
-                "message": success_message,
-                "deletion_details": deletion_details
-            }
+            return {"message": "File deleted successfully"}
 
         except Exception as e:
-            # Rollback database changes if deletion fails
+            # Rollback database changes if S3 deletion fails
             db.rollback()
-            
-            # Send error notification
-            await notification_manager.send_notification_with_retry(
-                current_user.id,
-                {
-                    "type": "error",
-                    "message": f"Failed to delete file: {str(e)}",
-                    "file_id": str(file_id),
-                    "status": "error"
-                }
-            )
-            
             log_error(logger, e, {
                 'file_id': str(file_id),
                 'user_id': str(current_user.id),
@@ -438,6 +435,13 @@ async def delete_file(
 
     except HTTPException:
         raise
+    except SQLAlchemyError as e:
+        log_error(logger, e, {
+            'file_id': str(file_id),
+            'user_id': str(current_user.id),
+            'operation': 'delete_file_db'
+        })
+        raise HTTPException(status_code=500, detail="Database error occurred")
     except Exception as e:
         log_error(logger, e, {
             'file_id': str(file_id),
