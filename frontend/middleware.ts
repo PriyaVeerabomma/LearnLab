@@ -4,42 +4,43 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get the token from the cookies
-  const token = request.cookies.get('access_token')?.value 
-               || request.headers.get('authorization')?.split(' ')[1] 
-               || '';
+  // Define protected routes
+  const protectedRoutes = ['/dashboard'];
+  const authRoutes = ['/auth'];
+  const publicRoutes = ['/'];
 
-  // Paths that don't require authentication
-  const publicPaths = ['/', '/auth'];
-  
-  // Check if the path is public
-  const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+  // Get token from cookie
+  const token = request.cookies.get('access_token')?.value;
+  const isAuthenticated = !!token;
 
-  // Check if token exists in localStorage
-  const isAuthenticated = token || request.cookies.has('access_token');
+  // Check if the current path is protected
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
 
-  console.log('Middleware Check:', {
-    pathname,
-    isPublicPath,
-    isAuthenticated,
-    hasToken: !!token
-  });
-
-  // If not authenticated and trying to access protected route
-  if (!isAuthenticated && !isPublicPath) {
-    console.log('Redirecting to auth - Not authenticated');
-    return NextResponse.redirect(new URL('/auth', request.url));
+  // Redirect to login if accessing protected route without auth
+  if (!isAuthenticated && isProtectedRoute) {
+    const redirectUrl = new URL('/auth', request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // If authenticated and trying to access auth pages
-  if (isAuthenticated && pathname.startsWith('/auth')) {
-    console.log('Redirecting to dashboard - Already authenticated');
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // Redirect to dashboard if authenticated user tries to access auth routes
+  if (isAuthenticated && isAuthRoute) {
+    const redirectUrl = new URL('/dashboard', request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };

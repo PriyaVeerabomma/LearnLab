@@ -1,4 +1,3 @@
-
 import os
 import json
 import requests
@@ -12,9 +11,12 @@ from langgraph.graph import Graph, StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.output_parsers import PydanticOutputParser
-from rag_application import RAGApplication
+from utils.rag_application import RAGApplication
 from langchain_groq import ChatGroq
-
+import os
+from utils.podcast_s3_storage import S3Storage
+from datetime import datetime
+import json 
 
 load_dotenv()
 
@@ -95,9 +97,12 @@ Return the enhanced script only, maintaining the exact same format."""
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
+
+
 class PodcastGenerator:
     def __init__(self):
         self.llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7, groq_api_key=GROQ_API_KEY)
+        self.llm_script_refinement = ChatGroq(model="llama-3.1-8b-instant", temperature=0.7, groq_api_key=GROQ_API_KEY)
         self.rag_app = RAGApplication()
         self.elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
         self.voice_ids = {
@@ -109,6 +114,25 @@ class PodcastGenerator:
             raise ValueError("ELEVENLABS_API_KEY is not set")
         if not all(self.voice_ids.values()):
             raise ValueError("Voice IDs not properly configured")
+        
+                # Add S3 initialization
+        self.s3_storage = S3Storage(bucket_name=os.getenv("AWS_BUCKET_NAME"))
+        
+        # Verify AWS credentials
+        if not all([
+            os.getenv("AWS_ACCESS_KEY_ID"),
+            os.getenv("AWS_SECRET_ACCESS_KEY"),
+            os.getenv("AWS_BUCKET_NAME")
+        ]):
+            raise ValueError("AWS credentials not properly configured")
+        
+        if not all([
+            os.getenv("UPSTASH_VECTOR_REST_URL"),
+            os.getenv("UPSTASH_VECTOR_REST_TOKEN")
+        ]):
+            raise ValueError("Upstash credentials not properly configured")
+            
+        self.cache = PodcastCache()
 
     def create_graph(self):
         workflow = StateGraph(GraphState)
@@ -198,12 +222,13 @@ class PodcastGenerator:
     def refine_script(self, state: GraphState) -> GraphState:
         prompt = ChatPromptTemplate.from_template(REFINE_SCRIPT_PROMPT)
         formatted_prompt = prompt.format_messages(script=state.script)
-        response = self.llm.invoke(formatted_prompt)
+        response = self.llm_script_refinement.invoke(formatted_prompt)
         
         state.script = response.content
         state.messages.append(AIMessage(content=response.content))
         state.current_stage = "script_refinement"
         return state
+
 
     def generate_tts(self, state: GraphState) -> GraphState:
         if not state.script:
@@ -228,12 +253,69 @@ class PodcastGenerator:
         for audio in audio_segments:
             combined_audio += audio + AudioSegment.silent(duration=500)
         
-        output_path = "podcast_episode.mp3"
-        combined_audio.export(output_path, format="mp3")
+        # Generate a temporary local file
+        temp_file = f"temp_podcast_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+        combined_audio.export(temp_file, format="mp3")
         
-        state.messages.append(AIMessage(content=f"Podcast audio generated and saved to {output_path}."))
+        # Upload to S3 and get URL
+        try:
+            s3_url = self.s3_storage.upload_file(
+                file_path=temp_file,
+                podcast_title=state.topic,
+                pdf_title=state.pdf_title
+            )
+            
+            # Add S3 URL to state message
+            state.messages.append(
+                AIMessage(content=f"Podcast audio generated and uploaded to S3: {s3_url}")
+            )
+            
+        except Exception as e:
+            # If S3 upload fails, keep the local file as backup
+            print(f"Warning: S3 upload failed - {str(e)}")
+            state.messages.append(
+                AIMessage(content=f"Warning: S3 upload failed. Podcast saved locally as {temp_file}")
+            )
+        
         state.current_stage = "complete"
         return state
+
+    def generate_podcast(self, question: str, pdf_title: str) -> Dict[str, Any]:
+        """Generate a podcast from a question and PDF"""
+        graph = self.create_graph()
+        
+        initial_state = GraphState(
+            messages=[HumanMessage(content=f"Create a podcast about: {question}")],
+            topic=question,
+            script=None,
+            current_stage="start",
+            rag_context=RAGContext(
+                question=question,
+                pdf_title=pdf_title
+            ),
+            pdf_title=pdf_title
+        )
+        
+        final_state = graph.invoke(initial_state)
+        
+        # Get the S3 URL from the last message
+        s3_url = None
+        for message in reversed(final_state["messages"]):
+            if "uploaded to S3:" in message.content:
+                s3_url = message.content.split("uploaded to S3: ")[-1]
+                break
+        
+        return {
+            "topic": question,
+            "script": final_state["script"],
+            "conversation_history": [m.content for m in final_state["messages"]],
+            "source_pdf": pdf_title,
+            "s3_url": s3_url,
+            "rag_context": {
+                "answer": final_state["rag_context"].answer,
+                "evidence": final_state["rag_context"].evidence
+            }
+        }
 
     def parse_unstructured_script(self, script_text: str) -> PodcastScript:
         segments = []
@@ -426,3 +508,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

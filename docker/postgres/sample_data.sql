@@ -39,7 +39,7 @@ INSERT INTO users (
     '340003bc-3dbc-4c0b-8c4c-777126934e5d',
     'admin@gmail.com',
     'admin',
-    '$2b$12$R5E9t4pmSqImcZKT.zWo1O59riysroDsCiBQQiAI5lIFpp4wstc82',  -- Note: In production, this should be properly hashed
+    '$2b$12$XG5nODyQtvlyySXgowYcW.axuiBncZvtxaOf3d12s0fXujy.9l.Mi',  -- Note: In production, this should be properly hashed
     'Admin User',
     true,
     CURRENT_TIMESTAMP,
