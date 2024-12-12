@@ -53,9 +53,8 @@ class CardService(BaseService):
             return True
         return False
 
-    def get_cards_by_page(self, deck_id: UUID, page_number: int) -> List[Flashcard]:
+    def get_cards_by_page(self, deck_id: UUID) -> List[Flashcard]:
         return self.db.query(Flashcard).filter(
-            Flashcard.deck_id == deck_id,
-            Flashcard.page_number == page_number,
+            Flashcard.deck_id == deck_id,            
             Flashcard.is_active == True
         ).all()

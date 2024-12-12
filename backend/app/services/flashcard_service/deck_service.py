@@ -25,13 +25,14 @@ class DeckService(BaseService):
             FlashcardDeck.is_active == True
         ).first()
 
-    def get_user_decks(self, user_id: UUID) -> List[DeckWithFile]:
+    def get_user_decks(self, user_id: UUID, file_id: UUID = None) -> List[DeckWithFile]:
         """Get all decks for a user with file information"""
         decks = self.db.query(FlashcardDeck).options(
             joinedload(FlashcardDeck.file)
         ).filter(
             FlashcardDeck.user_id == user_id,
-            FlashcardDeck.is_active == True
+            FlashcardDeck.is_active == True,
+            FlashcardDeck.file_id == file_id if file_id else True
         ).all()
         
         return [DeckWithFile.from_orm(deck) for deck in decks]

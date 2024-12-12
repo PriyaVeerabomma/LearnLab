@@ -26,7 +26,8 @@ class ReviewService(BaseService):
                 learning_progress.interval = round(learning_progress.interval * learning_progress.ease_factor)
 
             learning_progress.repetitions += 1
-
+        if learning_progress.ease_factor is None:
+            learning_progress.ease_factor = 2.5
         learning_progress.ease_factor += (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
         learning_progress.ease_factor = max(1.3, learning_progress.ease_factor)
 
