@@ -65,3 +65,15 @@ backend/docs/quiz/frontend-components.md
 backend/docs/quiz/frontend-workflow.md
 notes/deletedsql.md
 docker/postgres/quiz/README.md
+backend/sample_data/flashcards.json
+backend/sample_data/Model-Card-Claude-2.pdf
+backend/sample_data/podcast_episode.mp3
+backend/sample_data/podcasts.json
+backend/sample_data/quizzes.json
+backend/sample_data/audio/podcast_episode.mp3
+backend/sample_data/files/machine_learning_basics.txt
+backend/sample_data/files/Model-Card-Claude-2.pdf
+backend/sample_data/transcripts/deep_learning_basics.txt
+backend/sample_data/transcripts/deep_learning_basics.vtt
+backend/sample_data/transcripts/ml_introduction.txt
+backend/sample_data/transcripts/ml_introduction.vtt

@@ -131,6 +131,34 @@ async def update_quiz(
         })
         raise HTTPException(status_code=500, detail="Failed to update quiz")
 
+# Get api call for getting all questions in a quiz
+@router.get("/{quiz_id}/questions", response_model=List[QuestionWithAnswer])
+async def get_quiz_questions(
+    quiz_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all questions in a quiz"""
+    logger.info(f"Fetching questions for quiz {quiz_id}")
+    
+    try:
+        quiz_service = QuizService(db)
+        
+        if not quiz_service.validate_user_access(quiz_id, current_user.id):
+            logger.warning(f"User {current_user.id} attempted to access unauthorized questions for quiz {quiz_id}")
+            raise HTTPException(status_code=403, detail="Not authorized to access these questions")
+            
+        
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        log_error(logger, e, {
+            'quiz_id': str(quiz_id),
+            'user_id': str(current_user.id)
+        })
+        raise HTTPException(status_code=500, detail="Failed to fetch questions")
+
 @router.delete("/{quiz_id}")
 async def delete_quiz(
     quiz_id: UUID,

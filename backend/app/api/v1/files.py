@@ -101,12 +101,6 @@ async def list_files(
     List all files uploaded by the current user
     """
     logger.info(f"Listing files for user {current_user.id}. Skip: {skip}, Limit: {limit}")
-    await notification_manager.send_notification(current_user.id, {
-        "type": "notification",
-        "title": "Process Complete",
-        "message": "Your file has been processed",
-        "variant": "success"
-        })    
 
 
     try:
