@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Depends, UploadFile, HTTPException, Query
+from fastapi import APIRouter, Depends, UploadFile, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 from ...core.database import get_db
 from ...core.logger import setup_logger, log_error
 from ...services.s3 import S3Service
+from ...services.notification_service import notification_manager
 from ...schemas.file import File, FileCreate, FileResponse
 from ...models.file import File as FileModel
 from ...models.user import User
 from ...core.security import get_current_user
 from uuid import UUID
 import time
+import asyncio
 
 logger = setup_logger(__name__)
 router = APIRouter()
@@ -89,23 +91,24 @@ async def upload_file(
         raise HTTPException(status_code=500, detail="Failed to process file upload")
 
 @router.get("/files", response_model=List[FileResponse])
-async def list_files(
+async def list_files(    
     current_user: User = Depends(get_current_user),
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
-    db: Session = Depends(get_db)
+    limit: int = Query(10, ge=1, le=100), 
+    db: Session = Depends(get_db),    
 ):
     """
     List all files uploaded by the current user
     """
     logger.info(f"Listing files for user {current_user.id}. Skip: {skip}, Limit: {limit}")
-    
+
+
     try:
         files = db.query(FileModel).filter(
             FileModel.user_id == current_user.id,
             FileModel.is_deleted == False
         ).offset(skip).limit(limit).all()
-
+        
         logger.debug(f"Found {len(files)} files")
 
         # Generate download URLs for each file
@@ -130,7 +133,7 @@ async def list_files(
                     'operation': 'generate_url'
                 })
                 # Continue with other files even if one fails
-                continue
+                continue        
 
         return responses
 

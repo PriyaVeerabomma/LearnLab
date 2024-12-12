@@ -1,26 +1,20 @@
-version: '3.8'
 
 services:
-
   frontend:
     build:
       context: ./frontend
       target: development
     ports:
       - "3000:3000"
-    # volumes:
-    #   - ./frontend:/app
-    #   - /app/node_modules
-    env_file:
-      - ./.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     environment:
       - NODE_ENV=development
-      - REACT_APP_API_URL=http://localhost:8000
     depends_on:
       - backend
     networks:
       - learnlab-network
-    
 
   backend:
     build:
@@ -28,15 +22,13 @@ services:
       target: development
     ports:
       - "8000:8000"
-    # volumes:
-    #   - ./backend:/app
-    #   - /app/.venv  
+    volumes:
+      - ./backend:/app
     env_file:
-      - ./.env
-    environment:
-      - PYTHONPATH=/app
-      - DEBUG=True
-      - ENVIRONMENT=development
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - learnlab-network
 
@@ -49,21 +41,64 @@ services:
     volumes:
       - ./streamlit-ui:/app
     env_file:
-      - ./.env
-    environment:
-      - STREAMLIT_SERVER_PORT=8501
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
-      - BACKEND_URL=http://backend:8000
+      - ./streamlit-ui/.env
     depends_on:
       - backend
     networks:
       - learnlab-network
 
+  # airflow:
+  #   build:
+  #     context: ./airflow
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./airflow/dags:/opt/airflow/dags
+  #     - ./airflow/logs:/opt/airflow/logs
+  #     - ./airflow/plugins:/opt/airflow/plugins
+  #   environment:
+  #     - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@db:5432/airflow
+  #     - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+  #     - AIRFLOW__CORE__LOAD_EXAMPLES=False
+  #     - AIRFLOW__CORE__ENABLE_XCOM_PICKLING=True
+  #     - AIRFLOW__WEBSERVER__SECRET_KEY=your_secret_key_here
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   networks:
+  #     - learnlab-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+      - ./docker/postgres/create-multiple-databases.sh:/docker-entrypoint-initdb.d/00-create-multiple-databases.sh
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./docker/postgres/sample_data.sql:/docker-entrypoint-initdb.d/02-sample_data.sql
+      - ./docker/postgres/quiz:/docker-entrypoint-initdb.d/03-quiz
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_MULTIPLE_DATABASES=airflow,learnlab
+    networks:
+      - learnlab-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
-    name: learnlab_postgres_data_dev
 
 networks:
   learnlab-network:
-    name: learnlab_network_dev
     driver: bridge

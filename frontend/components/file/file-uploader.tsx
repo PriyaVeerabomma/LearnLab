@@ -2,18 +2,22 @@
 
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { useFileStore } from '@/store/file-store';
 import { useToast } from '@/hooks/use-toast';
+import { API_ROUTES } from '@/config';
+import { fetchClient } from '@/lib/api/fetch-client';
+import { useRouter } from 'next/navigation';
 
 export function FileUploader() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const addFile = useFileStore((state) => state.addFile);
   const { toast } = useToast();
+  const router = useRouter();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -37,7 +41,7 @@ export function FileUploader() {
         });
       }, 100);
 
-      const response = await fetch('/api/files/upload', {
+      const response = await fetchClient(API_ROUTES.files.upload, {
         method: 'POST',
         body: formData,
       });
@@ -46,6 +50,10 @@ export function FileUploader() {
       setProgress(100);
 
       if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/auth');
+          return;
+        }
         throw new Error('Upload failed');
       }
 
@@ -55,17 +63,18 @@ export function FileUploader() {
         title: "Success",
         description: "File uploaded successfully",
       });
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to upload file",
+        description: "Failed to upload file" + error.message,
       });
     } finally {
       setUploading(false);
       setProgress(0);
     }
-  }, [addFile, toast]);
+  }, [addFile, toast, router]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,

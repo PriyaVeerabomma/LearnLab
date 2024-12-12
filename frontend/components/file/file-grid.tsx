@@ -13,16 +13,33 @@ import { useFileStore } from '@/store/file-store';
 import { Download, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { API_ROUTES } from '@/config';
+import { fetchClient } from '@/lib/api/fetch-client';
+import { useRouter } from 'next/navigation';
+import { FileResponse } from '@/types/file';
 
 export function FileGrid() {
   const { files, setFiles, removeFile, setSelectedFile } = useFileStore();
   const { toast } = useToast();
+  const router = useRouter();
+  const handleCardClick = (file: FileResponse) => {
+    setSelectedFile
+    router.push(`/dashboard/${file.id}`);
+  };
 
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await fetch('/api/files');
-        if (!response.ok) throw new Error('Failed to fetch files');
+        const response = await fetchClient(API_ROUTES.files.list);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/auth');
+            return;
+          }
+          throw new Error('Failed to fetch files');
+        }
+        
         const data = await response.json();
         setFiles(data);
       } catch (error) {
@@ -35,15 +52,21 @@ export function FileGrid() {
     };
 
     fetchFiles();
-  }, [setFiles, toast]);
+  }, [setFiles, toast, router]);
 
   const handleDelete = async (fileId: string) => {
     try {
-      const response = await fetch(`/api/files/${fileId}`, {
+      const response = await fetchClient(API_ROUTES.files.delete(fileId), {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete file');
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/auth');
+          return;
+        }
+        throw new Error('Failed to delete file');
+      }
 
       removeFile(fileId);
       setSelectedFile(null);
@@ -74,7 +97,7 @@ export function FileGrid() {
         <Card 
           key={file.id} 
           className="hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setSelectedFile(file)}
+          onClick={() => handleCardClick(file)}
         >
           <CardHeader>
             <CardTitle className="text-lg truncate">

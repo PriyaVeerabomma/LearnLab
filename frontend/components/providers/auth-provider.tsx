@@ -46,23 +46,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('Initial AuthProvider mount');
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
-    console.log('Checking authentication status...');
     try {
-      const token = localStorage.getItem('access_token');
-      console.log('Stored token:', token ? 'exists' : 'not found');
-      
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('access_token='))
+        ?.split('=')[1];
+
       if (!token) {
         setIsLoading(false);
         return;
       }
 
-      // TODO: Replace with actual /me endpoint call
-      console.log('Setting dummy user data for development');
+      // Using dummy data for now until /me endpoint is ready
       setUser({
         id: "dummy-id",
         email: "user@example.com",
@@ -74,72 +73,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       removeCookie('access_token');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const refreshAccessToken = async (refreshToken: string) => {
-    try {
-      const response = await fetch(`${API_URL}/auth/refresh-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
+  const handleAuthSuccess = async (tokens: { access_token: string, refresh_token: string }) => {
+    // Store tokens
+    localStorage.setItem('access_token', tokens.access_token);
+    localStorage.setItem('refresh_token', tokens.refresh_token);
+    setCookie('access_token', tokens.access_token);
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        setCookie('access_token', data.access_token);
-        return data.access_token;
-      } else {
-        throw new Error('Refresh token failed');
-      }
-    } catch (error) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      removeCookie('access_token');
-      setUser(null);
-      throw error;
-    }
-  };
-
-  const updateUserData = async (token: string) => {
-    console.log('Updating user data with token:', token ? 'exists' : 'missing');
-    // TODO: Replace with actual /me endpoint call
+    // Set dummy user data
     setUser({
       id: "dummy-id",
       email: "user@example.com",
       username: "demouser",
       full_name: "Demo User"
     });
-    console.log('User data updated successfully');
-  };
-
-  const handleAuthSuccess = async (tokens: { access_token: string, refresh_token: string }) => {
-    console.log('Handling successful authentication...');
     
-    localStorage.setItem('access_token', tokens.access_token);
-    localStorage.setItem('refresh_token', tokens.refresh_token);
-    setCookie('access_token', tokens.access_token);
-    console.log('Tokens stored in localStorage and cookies');
-
-    await updateUserData(tokens.access_token);
-    console.log('User data updated, preparing for navigation');
-
-    try {
-      await router.push('/dashboard');
-      console.log('Navigation to dashboard completed');
-    } catch (navError) {
-      console.error('Navigation error:', navError);
-    }
+    await router.push('/dashboard');
   };
 
   const login = async (email: string, password: string) => {
-    console.log('Starting login process for email:', email);
     try {
       setIsLoading(true);
       setError(null);
@@ -148,7 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       formData.append('username', email);
       formData.append('password', password);
 
-      console.log('Making login request to:', `${API_URL}/auth/login`);
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -158,14 +114,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        console.error('Login request failed:', response.status);
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Login failed');
       }
 
       const data = await response.json();
-      console.log('Login successful, received token');
-      
       await handleAuthSuccess(data);
     } catch (err) {
       console.error('Login error:', err);
@@ -177,12 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (userData: RegisterData) => {
-    console.log('Starting registration process');
     try {
       setIsLoading(true);
       setError(null);
 
-      console.log('Making registration request');
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -192,12 +143,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        console.error('Registration request failed:', response.status);
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Registration failed');
       }
 
-      console.log('Registration successful, proceeding to login');
       await login(userData.email, userData.password);
     } catch (err) {
       console.error('Registration error:', err);
@@ -207,30 +156,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    console.log('Starting logout process');
     try {
       setIsLoading(true);
       const refreshToken = localStorage.getItem('refresh_token');
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('access_token='))
+        ?.split('=')[1];
       
-      if (refreshToken) {
-        console.log('Making logout request');
+      if (refreshToken && token) {
         await fetch(`${API_URL}/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            'Authorization': `Bearer ${decodeURIComponent(token)}`
           },
           body: JSON.stringify({ refresh_token: refreshToken }),
         });
       }
 
-      console.log('Clearing storage and cookies');
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       removeCookie('access_token');
       setUser(null);
       
-      console.log('Navigating to home page');
       await router.push('/');
     } catch (err) {
       console.error('Logout error:', err);

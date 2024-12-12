@@ -83,7 +83,7 @@ class PodcastWithDetails(PodcastInDB):
     @validator('audio_url', 'transcript_txt_url', 'transcript_vtt_url')
     def validate_urls(cls, v):
         if v:
-            allowed_domains = ['s3.amazonaws.com', 'your-cdn-domain.com']
+            allowed_domains = ['s3.amazonaws.com', 'learnlab-files.s3.amazonaws.com']
             if str(v).split('/')[2] not in allowed_domains:
                 raise ValueError(f'URL domain must be one of {allowed_domains}')
         return v
