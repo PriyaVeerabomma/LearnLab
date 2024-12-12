@@ -1,0 +1,76 @@
+name: 1. CI Testing
+
+on:
+  pull_request:
+    branches:
+      - main
+
+
+env:
+  PYTHON_VERSION: '3.12'
+  POETRY_VERSION: '1.7.0'
+  PYTHONPATH: ${{ github.workspace }}/backend
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+  JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  DEBUG: "True"
+  ENVIRONMENT: "test"
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      # Step 3: Verify required secrets
+      - name: Verify required secrets
+        run: |
+          echo "Verifying required secrets..."
+          required_secrets=(
+            DATABASE_URL
+            JWT_SECRET_KEY
+            JWT_ALGORITHM
+            AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY
+            AWS_BUCKET_NAME
+            AWS_REGION
+          )
+          for secret in "${required_secrets[@]}"; do
+            if [ -z "${!secret}" ]; then
+              echo "Error: $secret is not set!"
+              exit 1
+            else
+              echo "Verified secret: $secret"
+            fi
+          done
+          echo "All required secrets verified."
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+        
+      - name: Install dependencies
+        run: poetry install --no-root
+
+      - name: Run tests
+        run: poetry run pytest tests/ -v

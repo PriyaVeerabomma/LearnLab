@@ -1,3 +1,4 @@
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -311,8 +312,7 @@ SELECT
     u.email,
     u.username,
     COUNT(DISTINCT fd.id) as total_decks,
-    COUNT(DISTINCT f.id) as total_cards,
-    COUNT(DISTINCT fd.file_id) as files_with_decks,
+    COUNT(DISTINCT f.id) as total_cards,    
     COALESCE(AVG(lp.ease_factor), 2.5) as avg_performance
 FROM users u
 LEFT JOIN flashcard_decks fd ON u.id = fd.user_id AND fd.is_active = true

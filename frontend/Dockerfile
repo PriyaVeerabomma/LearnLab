@@ -25,6 +25,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --force
 
+#Modify at the later stage
+#RUN npm ci --only=production
+RUN npm ci 
 # Copy source
 COPY . .
 
