@@ -51,3 +51,6 @@ dist/
 backend/logs*
 backend/logs/*
 backend/logs/2024-12-01_app.log
+
+# Secrets
+blogger_api.json
