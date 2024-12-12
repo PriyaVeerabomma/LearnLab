@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Headphones, BrainCircuit, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { use } from "react";
 
 interface FilePageProps {
   params: {
@@ -15,19 +16,22 @@ interface FilePageProps {
 }
 
 export default function FilePage({ params }: FilePageProps) {
+  // Unwrap the params Promise using React.use()
+  const { fileId } = use(params);
+
   const router = useRouter();
   const { selectedFile } = useFileStore();
 
   useEffect(() => {
     // TODO: Fetch file details and stats if not already in store
-  }, [params.fileId]);
+  }, [fileId]);
 
   const features = [
     {
       title: "Podcasts",
       icon: Headphones,
       description: "0 podcasts generated",
-      href: `/dashboard/${params.fileId}/podcast`,
+      href: `/dashboard/${fileId}/podcast`,
       stats: [
         { label: "Total", value: "0" },
         { label: "Completed", value: "0" },
@@ -38,7 +42,7 @@ export default function FilePage({ params }: FilePageProps) {
       title: "Quizzes",
       icon: BrainCircuit,
       description: "0 quizzes created",
-      href: `/dashboard/${params.fileId}/quiz`,
+      href: `/dashboard/${fileId}/quiz`,
       stats: [
         { label: "Total", value: "0" },
         { label: "Attempted", value: "0" },
@@ -49,7 +53,7 @@ export default function FilePage({ params }: FilePageProps) {
       title: "Flashcards",
       icon: Car,
       description: "0 cards created",
-      href: `/dashboard/${params.fileId}/flashcard`,
+      href: `/dashboard/${fileId}/flashcard`,
       stats: [
         { label: "Total Cards", value: "0" },
         { label: "Mastered", value: "0" },
@@ -59,7 +63,7 @@ export default function FilePage({ params }: FilePageProps) {
   ];
 
   return (
-    <FileLayout fileId={params.fileId}>
+    <FileLayout fileId={fileId}>
       <div className="space-y-6">
         {/* File Header */}
         <div>
