@@ -2,13 +2,14 @@ import os
 import tempfile
 
 import aiofiles
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import Optional
 
 from ....models import Podcast
+from ....schemas.flashcard import DeckCreate, FlashcardCreate
 from ....schemas.quiz import (
     QuizCreate, QuizUpdate, QuizInDB, 
     QuizWithDetails, QuizList
@@ -30,7 +31,7 @@ from app.models.user import User
 from app.schemas.generate.models import GenerateRequest, GenerateResponse
 from app.services.podcast_service import AudioService, TranscriptService
 from app.services.quiz_service import QuizService, QuestionService
-from app.services.flashcard_service import FlashcardService
+from app.services.flashcard_service import FlashcardService, DeckService, CardService
 from agents.podcast_agent.learn_lab_assistant_agent import PodcastGenerator
 from app.schemas.quiz.quiz import QuizCreate
 # notification_manager
@@ -215,6 +216,16 @@ async def generate_quiz(file_id: UUID, query: str, db: Session, user_id: UUID):
             # notification_manager.send_notification(user_id, {)
 
         logger.info(f"Completed quiz generation for file {file_id}")
+        await notification_manager.send_notification(
+            user_id,
+            {
+                "type": "notification",
+                "title": "Quiz Generated",
+                "message": f"Your Quiz '{result['quiz']['title']}' has been generated successfully",
+                "variant": "success",
+                "duration": 5000
+            }
+        )
         
     except Exception as e:
         log_error(logger, e, {
@@ -222,25 +233,119 @@ async def generate_quiz(file_id: UUID, query: str, db: Session, user_id: UUID):
             'file_id': str(file_id),
             'user_id': str(user_id)
         })
+
+
 async def generate_flashcards(
-    file_id: UUID,
-    query: str,
-    db: Session,
-    user_id: UUID
+        file_id: UUID,
+        query: str,
+        db: Session,
+        user_id: UUID
 ):
     """Background task for flashcard generation"""
     try:
         logger.info(f"Starting flashcard generation for file {file_id}")
-        flashcard_service = FlashcardService(db)
-        # TODO: Implement flashcard generation logic
-        logger.info(f"Completed flashcard generation for file {file_id}")
+        deck_service = DeckService(db)
+        card_service = CardService(db)
+
+        # 1. Generate flashcard content using PodcastGenerator
+        try:
+            result = podcast_generator.generate_content(
+                question=query,
+                pdf_title="Help.pdf",  # TODO: Get actual filename
+                output_type="flashcards"
+            )
+
+            if not result.get('flashcards'):
+                raise HTTPException(
+                    status_code=500,
+                    detail="No flashcards were generated"
+                )
+
+            logger.debug(f"Generated flashcard content for file {file_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to generate flashcard content: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error generating flashcards: {str(e)}"
+            )
+
+        # 2. Create deck using DeckCreate schema
+        try:
+            deck_data = DeckCreate(
+                title=result['flashcards']['title'],
+                description=query,  # Using the query as description
+                file_id=file_id
+            )
+            deck = deck_service.create_deck(user_id, deck_data)
+            logger.debug(f"Created flashcard deck {deck.id} for file {file_id}")
+
+        except Exception as e:
+            logger.error(f"Failed to create deck: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error creating flashcard deck: {str(e)}"
+            )
+
+        # 3. Create flashcards using FlashcardCreate schema
+        created_cards = 0
+        for card in result['flashcards']['flashcards']:
+            try:
+                card_data = FlashcardCreate(
+                    front_content=card['front'],
+                    back_content=card['back'],
+                    page_number=card.get('page_number'),  # Optional page number
+                    concepts=card.get('concepts', [])  # Optional concepts
+                )
+                card_service.create_flashcard(deck.id, card_data)
+                created_cards += 1
+
+            except Exception as e:
+                logger.error(f"Failed to create flashcard in deck {deck.id}: {str(e)}")
+                # If some cards failed, continue with others but log the error
+                continue
+
+        if created_cards == 0:
+            # If no cards were created, delete the deck and raise error
+            logger.error(f"No flashcards were created for deck {deck.id}")
+            deck_service.delete_deck(deck.id)
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create any flashcards"
+            )
+
+        logger.info(f"Successfully created {created_cards} flashcards in deck {deck.id}")
+
+        # 4. Optional: Send notification about completion
+        try:
+            notification_data = {
+                "type": "notification",
+                "title": "Flashcards Generated",
+                "message": f"Created {created_cards} flashcards in deck '{deck_data.title}'",
+                "variant": "success"
+            }
+            await notification_manager.send_notification(user_id, notification_data)
+
+        except Exception as e:
+            # Log notification error but don't fail the operation
+            logger.error(f"Failed to send completion notification: {str(e)}")
+
+        return deck
+
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
+        # Log and wrap unexpected errors
         log_error(logger, e, {
             'operation': 'flashcard_generation',
             'file_id': str(file_id),
             'user_id': str(user_id)
         })
-
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred during flashcard generation: {str(e)}"
+        )
 @router.post("", response_model=GenerateResponse)
 async def generate_learning_materials(
     request: GenerateRequest,

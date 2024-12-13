@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchClient } from '@/lib/api/fetch-client';
+import { API_ROUTES } from '@/config';
 
 interface User {
   id: string;
@@ -61,13 +63,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Using dummy data for now until /me endpoint is ready
-      setUser({
-        id: "dummy-id",
-        email: "user@example.com",
-        username: "demouser",
-        full_name: "Demo User"
-      });
+      const response = await fetchClient(`${API_ROUTES.auth.me}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+
+      const userData = await response.json();
+      console.log('User data:', userData);
+      setUser(userData);
     } catch (err) {
       console.error('Auth check failed:', err);
       localStorage.removeItem('access_token');
@@ -78,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   };
-
   const handleAuthSuccess = async (tokens: { access_token: string, refresh_token: string }) => {
     // Store tokens
     localStorage.setItem('access_token', tokens.access_token);
@@ -86,13 +89,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCookie('access_token', tokens.access_token);
 
     // Set dummy user data
-    setUser({
-      id: "dummy-id",
-      email: "user@example.com",
-      username: "demouser",
-      full_name: "Demo User"
-    });
-    
+    const response = await fetchClient(`${API_ROUTES.auth.me}`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch user details');
+    }
+
+    const userData = await response.json();
+    console.log('User data:', userData);
+    setUser(userData);
+
     await router.push('/dashboard');
   };
 
@@ -100,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
@@ -163,7 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .split('; ')
         .find(row => row.startsWith('access_token='))
         ?.split('=')[1];
-      
+
       if (refreshToken && token) {
         await fetch(`${API_URL}/auth/logout`, {
           method: 'POST',
@@ -179,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('refresh_token');
       removeCookie('access_token');
       setUser(null);
-      
+
       await router.push('/');
     } catch (err) {
       console.error('Logout error:', err);
