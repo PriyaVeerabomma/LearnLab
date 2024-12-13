@@ -25,13 +25,14 @@ class DeckService(BaseService):
             FlashcardDeck.is_active == True
         ).first()
 
-    def get_user_decks(self, user_id: UUID) -> List[DeckWithFile]:
+    def get_user_decks(self, user_id: UUID, file_id: UUID = None) -> List[DeckWithFile]:
         """Get all decks for a user with file information"""
         decks = self.db.query(FlashcardDeck).options(
             joinedload(FlashcardDeck.file)
         ).filter(
             FlashcardDeck.user_id == user_id,
-            FlashcardDeck.is_active == True
+            FlashcardDeck.is_active == True,
+            FlashcardDeck.file_id == file_id if file_id else True
         ).all()
         
         return [DeckWithFile.from_orm(deck) for deck in decks]
@@ -40,17 +41,17 @@ class DeckService(BaseService):
         # Verify file access
         self.verify_file_access(user_id, deck_data.file_id)
         
-        # Check if deck already exists for this file
-        existing_deck = self.db.query(FlashcardDeck).filter(
-            FlashcardDeck.file_id == deck_data.file_id,
-            FlashcardDeck.is_active == True
-        ).first()
+        # # Check if deck already exists for this file
+        # existing_deck = self.db.query(FlashcardDeck).filter(
+        #     FlashcardDeck.file_id == deck_data.file_id,
+        #     FlashcardDeck.is_active == True
+        # ).first()
         
-        if existing_deck:
-            raise HTTPException(
-                status_code=400,
-                detail="A deck already exists for this file"
-            )
+        # if existing_deck:
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail="A deck already exists for this file"
+        #     )
 
         deck = FlashcardDeck(
             user_id=user_id,

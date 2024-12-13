@@ -12,8 +12,16 @@ from app.schemas.flashcard import (
     UserStats, DeckProgress, DeckWithFile
 )
 from app.services.flashcard_service import FlashcardService
+from agents.podcast_agent.learn_lab_assistant_agent import PodcastGenerator
+from app.services.flashcard_service.deck_service import DeckService
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
+
+# Initialize PodcastGenerator
+podcast_generator = PodcastGenerator()
 
 @router.post("/decks", response_model=DeckWithFile)
 async def create_deck(
@@ -21,10 +29,69 @@ async def create_deck(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new flashcard deck for a file"""
-    service = FlashcardService(db)
-    deck = service.create_deck(current_user.id, deck_data)
-    return DeckWithFile.from_orm(deck)
+    """Create a new flashcard deck for a file with AI-generated content"""
+    try:
+        # Get service instances
+        deck_service = DeckService(db)
+        
+        # Verify file access and get file info
+        file = deck_service.verify_file_access(current_user.id, deck_data.file_id)
+        
+        # Generate flashcards using PodcastGenerator using description as query
+        try:
+            result = podcast_generator.generate_content(
+                question=deck_data.description,  # Using description as the query
+                pdf_title=file.filename,  # Using filename as pdf_title
+                output_type="flashcards"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error generating flashcards: {str(e)}"
+            )
+            
+        if not result.get('flashcards'):
+            raise HTTPException(
+                status_code=500,
+                detail="No flashcards were generated"
+            )
+        
+        # Use generated title if none provided
+        if not deck_data.title or deck_data.title == "string":
+            deck_data.title = result['flashcards']['title']
+            
+        # Create deck
+        deck = deck_service.create_deck(current_user.id, deck_data)
+        
+        # Create flashcards in the deck
+        flashcard_service = FlashcardService(db)
+        for card in result['flashcards']['flashcards']:
+            flashcard_data = FlashcardCreate(
+                deck_id=deck.id,
+                front_content=card['front'],  # Changed from front to front_content
+                back_content=card['back'],    # Changed from back to back_content
+                explanation=card.get('explanation', None)
+            )
+            try:
+                flashcard_service.create_flashcard(deck.id, flashcard_data)
+            except Exception as e:
+                # If flashcard creation fails, delete the deck and raise error
+                deck_service.delete_deck(deck.id)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error creating flashcard: {str(e)}"
+                )
+            
+        # Return deck with file information
+        return DeckWithFile.from_orm(deck)
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
 
 @router.get("/decks", response_model=List[DeckWithFile])
 async def get_user_decks(
