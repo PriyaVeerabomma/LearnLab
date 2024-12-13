@@ -15,9 +15,11 @@ import hashlib
 
 load_dotenv()
 class PDFProcessor:
-    def __init__(self, openai_api_key: str, pinecone_api_key: str):
+    def __init__(self, openai_api_key: str, pinecone_api_key: str, pinecone_index_name: str):
         """Initialize the PDF processor with necessary components."""
         openai_api_key = os.getenv("OPENAI_API_KEY")
+        pinecone_api_key = os.getenv("PINECONE_API_KEY")
+        pinecone_index_name = os.getenv("PINECONE_INDEX_NAME","pdf-semantic-chunking")
         self.encoder = OpenAIEncoder(name="text-embedding-3-small")
         logger.setLevel("WARNING")
         
@@ -35,14 +37,20 @@ class PDFProcessor:
         )
         
         self.index = None
+        self.create_index(index_name=pinecone_index_name)
 
     def create_index(self, index_name: str = "pdf-semantic-chunking1"):
         """Create and initialize Pinecone index."""
         # Setup serverless specification
         spec = ServerlessSpec(cloud="aws", region="us-east-1")
         
-        # Create index if it doesn't exist
-        if index_name not in self.pc.list_indexes().names():
+        # Check if index exists
+        if index_name in self.pc.list_indexes().names():
+            # If exists, just connect to it
+            self.index = self.pc.Index(index_name)
+            logger.info(f"Connected to existing index: {index_name}")
+        else:
+            # Create new index if it doesn't exist
             self.pc.create_index(
                 name=index_name,
                 dimension=self.dims,
@@ -52,11 +60,33 @@ class PDFProcessor:
             # Wait for index to be initialized
             while not self.pc.describe_index(index_name).status['ready']:
                 time.sleep(1)
+            
+            # Connect to index
+            self.index = self.pc.Index(index_name)
+            logger.info(f"Created and initialized new index: {index_name}")
         
-        # Connect to index
-        self.index = self.pc.Index(index_name)
-        time.sleep(1)
+        time.sleep(1)  # Small delay to ensure connection is established
         return self.index.describe_index_stats()
+        # """Create and initialize Pinecone index."""
+        # # Setup serverless specification
+        # spec = ServerlessSpec(cloud="aws", region="us-east-1")
+        
+        # # Create index if it doesn't exist
+        # if index_name not in self.pc.list_indexes().names():
+        #     self.pc.create_index(
+        #         name=index_name,
+        #         dimension=self.dims,
+        #         metric='dotproduct',
+        #         spec=spec
+        #     )
+        #     # Wait for index to be initialized
+        #     while not self.pc.describe_index(index_name).status['ready']:
+        #         time.sleep(1)
+        
+        # # Connect to index
+        # self.index = self.pc.Index(index_name)
+        # time.sleep(1)
+        # return self.index.describe_index_stats()
 
     def build_chunk(self, title: str, content: str) -> str:
         """Format chunk with title for embedding."""
@@ -217,11 +247,14 @@ class PDFProcessor:
         if not self.index:
             raise ValueError("Index not initialized. Call create_index() first.")
             
+        if not pdf_title:
+            raise ValueError("PDF title is required for querying.")
+    
         # Create query embedding
         xq = self.encoder([text])[0]
         
         # Prepare filter if pdf_title is specified
-        filter_dict = {"title": pdf_title} if pdf_title else None
+        filter_dict = {"title": pdf_title}
         
         # Query index
         matches = self.index.query(
@@ -256,6 +289,9 @@ class PDFProcessor:
             
             chunk = f"# {title}\n\n{context if context else content}"
             chunks.append(chunk)
+
+        print(f"Query Results for '{pdf_title}':")
+        print(f"Number of Matches: {len(chunks)}")
             
         return chunks
 
