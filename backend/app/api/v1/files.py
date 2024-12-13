@@ -27,11 +27,12 @@ s3_service = S3Service()
 load_dotenv()
 pdf_processor = PDFProcessor(
     openai_api_key=os.getenv("OPENAI_API_KEY"),
-    pinecone_api_key=os.getenv("PINECONE_API_KEY")
+    pinecone_api_key=os.getenv("PINECONE_API_KEY"),
+    pinecone_index_name=os.getenv("PINECONE_INDEX_NAME", "pdf-semantic-chunking")
 )
 
 # Create Pinecone index on startup
-pdf_processor.create_index("file-embeddings-index")
+pdf_processor.create_index("pdf-semantic-chunking")
 
 # Create a dedicated directory for temporary files
 TEMP_DIR = "/tmp/pdf_processing"

@@ -17,7 +17,8 @@ from agents.utils.podcast_s3_storage import S3Storage
 from agents.utils.upstash_cache import PodcastCache
 from agents.utils.flashcard_agent import ContentEngine, FlashcardSet, Flashcard
 from agents.utils.qna_agent import QuizGenerator, QuizSet
-
+from agents.utils.tweet_agent import TweetAgent, TweetContent
+from agents.utils.blog_agent import BlogAgent, BlogContent
 
 load_dotenv()
 
@@ -51,6 +52,8 @@ class EnhancedGraphState(BaseModel):
     quiz: Optional[QuizSet] = None  # Add this line
     current_stage: str = "start"
     script: Optional[str] = None
+    blog_content: Optional[BlogContent] = None
+    tweet_content: Optional[TweetContent] = None
 
 class IntegratedContentGenerator:
     def __init__(self):
@@ -164,6 +167,8 @@ class PodcastGenerator:
         workflow.add_node("generate_flashcards", self.generate_flashcards)
         workflow.add_node("generate_quiz", self.generate_quiz)
         workflow.add_node("route_content", self.route_content)
+        workflow.add_node("blog_generation", self.generate_blog)
+        workflow.add_node("tweet_generation", self.generate_tweet)
 
         # Set up the base flow
         workflow.add_edge(START, "route_content")
@@ -173,9 +178,11 @@ class PodcastGenerator:
             "route_content",
             lambda x: x.output_type,
             {
-                "podcast": "check_cache",
-                "flashcards": "generate_flashcards",
-                "quiz": "generate_quiz"
+            "podcast": "check_cache",
+            "flashcards": "generate_flashcards",
+            "quiz": "generate_quiz",
+            "blog": "blog_generation",
+            "tweet": "tweet_generation" 
             }
         )
         
@@ -192,14 +199,106 @@ class PodcastGenerator:
         workflow.add_edge("rag_retrieval", "topic_expansion")
         workflow.add_edge("topic_expansion", "script_generation")
         workflow.add_edge("script_generation", "tts_generation")
-        
         # Final edges to END
         workflow.add_edge("tts_generation", END)
         workflow.add_edge("generate_flashcards", END)
         workflow.add_edge("generate_quiz", END)
+        workflow.add_edge("blog_generation", END)
+        workflow.add_edge("tweet_generation", END)
 
         return workflow.compile()
     
+
+    def generate_blog(self, state: EnhancedGraphState) -> EnhancedGraphState:
+        """Generate a blog using the BlogAgent."""
+        try:
+            print("DEBUG: Starting blog generation")
+            print(f"DEBUG: RAG Context - Question: {state.rag_context.question}")
+            print(f"DEBUG: RAG Context - Answer: {state.rag_context.answer}")
+            print(f"DEBUG: RAG Context - Evidence Length: {len(state.rag_context.evidence)}")
+
+            blog_agent = BlogAgent(api_key=os.getenv("GEMINI_API_KEY"))
+            
+            # Detect lack of context and adjust generation strategy
+            if not state.rag_context.answer or not state.rag_context.evidence:
+                # Generate a generic blog based on the query
+                blog_content = blog_agent.generate_blog(
+                    query=state.rag_context.question,
+                    rag_context={
+                        "answer": f"Exploring the topic: {state.rag_context.question}",
+                        "evidence": []
+                    }
+                )
+            else:
+                # Normal blog generation with available context
+                blog_content = blog_agent.generate_blog(
+                    query=state.rag_context.question,
+                    rag_context={
+                        "answer": state.rag_context.answer,
+                        "evidence": state.rag_context.evidence
+                    }
+                )
+
+            print(f"DEBUG: Generated Blog Content: {blog_content}")
+            print(f"DEBUG: Blog Content Type: {type(blog_content)}")
+
+            # Directly set the blog_content in the state
+            state.blog_content = blog_content
+            
+            state.messages.append(
+                AIMessage(content=f"Generated blog: {blog_content.title}")
+            )
+            state.current_stage = "blog_generation"
+
+            print("DEBUG: Blog generation completed successfully")
+
+        except Exception as e:
+            print(f"CRITICAL ERROR generating blog: {str(e)}")
+            print(f"ERROR Details: {traceback.format_exc()}")
+            state.blog_content = None
+
+        return state
+
+    def generate_tweet(self, state: EnhancedGraphState) -> EnhancedGraphState:
+        """Generate a tweet using the TweetAgent."""
+        try:
+            print("DEBUG: Starting tweet generation")
+            print(f"DEBUG: RAG Context - Question: {state.rag_context.question}")
+            print(f"DEBUG: RAG Context - Answer: {state.rag_context.answer}")
+            print(f"DEBUG: RAG Context - Evidence Length: {len(state.rag_context.evidence)}")
+
+            tweet_agent = TweetAgent(api_key=os.getenv("GEMINI_API_KEY"))
+            
+            rag_context = {
+                "answer": state.rag_context.answer,
+                "evidence": state.rag_context.evidence
+            }
+            
+            tweet_content = tweet_agent.generate_tweet(
+                query=state.rag_context.question,
+                rag_context=rag_context
+            )
+
+            print(f"DEBUG: Generated Tweet Content: {tweet_content}")
+            print(f"DEBUG: Tweet Content Type: {type(tweet_content)}")
+
+            # Directly set the tweet_content in the state
+            setattr(state, 'tweet_content', tweet_content)
+            
+            state.messages.append(
+                AIMessage(content=f"Generated tweet: {tweet_content.tweet}")
+            )
+            state.current_stage = "tweet_generation"
+
+            print("DEBUG: Tweet generation completed successfully")
+
+        except Exception as e:
+            print(f"CRITICAL ERROR generating tweet: {str(e)}")
+            print(f"ERROR Details: {traceback.format_exc()}")
+            state.tweet_content = None
+
+        return state
+
     def generate_quiz(self, state: EnhancedGraphState) -> EnhancedGraphState:
         """Generate quiz using quiz generator"""
         context = f"""
@@ -257,8 +356,16 @@ class PodcastGenerator:
     def generate_content(self, question: str, pdf_title: str, output_type: str = "podcast") -> Dict[str, Any]:
         """Generate either a podcast or flashcards based on the specified output type"""
         # First retrieve RAG context regardless of output type
+        print(f"DEBUG: Generating content for query: {question}, Output Type: {output_type}")
+        print(f"DEBUG: Using PDF Title: {pdf_title}")
         rag_response = self.rag_app.query_document(question, pdf_title)
 
+        
+        # Check for errors in RAG response
+        if "error" in rag_response:
+            print(f"ERROR: {rag_response['error']}")
+            raise ValueError(f"Failed to retrieve context: {rag_response['error']}")
+        
         if output_type == "quiz":
             graph = self.create_graph()
             
@@ -351,9 +458,89 @@ class PodcastGenerator:
             except Exception as e:
                 print(f"Error generating flashcards: {str(e)}")
                 raise
+
+        if output_type == "blog":
+            graph = self.create_graph()
+            
+            initial_state = EnhancedGraphState(
+                messages=[HumanMessage(content=f"Create {output_type} about: {question}")],
+                topic=question,
+                output_type=output_type,
+                rag_context=RAGContext(
+                    question=question,
+                    pdf_title=pdf_title,
+                    answer=rag_response["answer"],
+                    evidence=rag_response["relevant_chunks"]
+                ),
+                pdf_title=pdf_title,
+                cache_result=None
+            )
+            
+            try:
+                final_state = graph.invoke(initial_state)
+                
+                # Explicitly extract blog content
+                blog_content = final_state.get("blog_content")
+                
+                if not blog_content:
+                    raise ValueError("No blog was generated")
+
+                return {
+                    "topic": question,
+                    "blog_content": {
+                        "title": blog_content.title,
+                        "body": blog_content.body
+                    },
+                    "rag_context": {
+                        "answer": rag_response["answer"],
+                        "evidence": rag_response["relevant_chunks"]
+                    }
+                }
+            except Exception as e:
+                print(f"Error generating blog: {str(e)}")
+
+
+        if output_type == "tweet":
+            graph = self.create_graph()
+            print(f"DEBUG: Generating tweet for query: {question}, RAG Response: {rag_response}")
+            initial_state = EnhancedGraphState(
+                messages=[HumanMessage(content=f"Create {output_type} about: {question}")],
+                topic=question,
+                output_type=output_type,
+                rag_context=RAGContext(
+                    question=question,
+                    pdf_title=pdf_title,
+                    answer=rag_response["answer"],
+                    evidence=rag_response["relevant_chunks"]
+                ),
+                pdf_title=pdf_title,
+                cache_result=None,
+                tweet_content=None
+            )
+            
+            try:
+                final_state = graph.invoke(initial_state)
+                
+                # Ensure tweet content is returned
+                tweet_content = final_state.get("tweet_content")
+                
+                if not tweet_content:
+                    raise ValueError("No tweet was generated")
+
+                return {
+                    "topic": question,
+                    "tweet_content": tweet_content.tweet,  # Explicitly access .tweet
+                    "rag_context": {
+                        "answer": rag_response["answer"],
+                        "evidence": rag_response["relevant_chunks"]
+                    }
+                }
+            except Exception as e:
+                print(f"Error generating tweet: {str(e)}")
+                raise
+
         else:  # podcast generation
             return self.generate_podcast(question=question, pdf_title=pdf_title)
-        
         
         
        
@@ -698,15 +885,19 @@ def handle_content_generation(generator: PodcastGenerator):
     print("1. Podcast")
     print("2. Flashcards")
     print("3. Quiz")
+    print("4. Blog")
+    print("5. Tweet")
     
     while True:
         try:
             output_choice = int(input("Enter your choice (1-3): "))
-            if output_choice in [1, 2, 3]:
+            if output_choice in [1, 2, 3,4,5]:
                 output_type = {
                     1: "podcast",
                     2: "flashcards",
-                    3: "quiz"
+                    3: "quiz",
+                    4: "blog",
+                    5: "tweet"
                 }[output_choice]
                 break
             print("Invalid selection. Please try again.")
@@ -804,6 +995,16 @@ def handle_content_generation(generator: PodcastGenerator):
                         print("Options:")
                         for j, opt in enumerate(q['options'], 1):
                             print(f"  {j}. {opt}")
+        elif output_type == "blog":
+            print("\nGenerated blog!")
+            if result.get('blog_content'):
+                blog_data = result['blog_content']
+                print(f"\nTitle: {blog_data['title']}")
+                print(f"Body: {blog_data['body']}")
+        elif output_type == "tweet":
+            print("\nGenerated tweet!")
+            if result.get('tweet_content'):
+                print(f"\nTweet: {result['tweet_content']}")
         
         # Save result to local file for reference
         output_filename = f"{output_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_output.json"

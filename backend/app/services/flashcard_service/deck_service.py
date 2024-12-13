@@ -41,17 +41,17 @@ class DeckService(BaseService):
         # Verify file access
         self.verify_file_access(user_id, deck_data.file_id)
         
-        # Check if deck already exists for this file
-        existing_deck = self.db.query(FlashcardDeck).filter(
-            FlashcardDeck.file_id == deck_data.file_id,
-            FlashcardDeck.is_active == True
-        ).first()
+        # # Check if deck already exists for this file
+        # existing_deck = self.db.query(FlashcardDeck).filter(
+        #     FlashcardDeck.file_id == deck_data.file_id,
+        #     FlashcardDeck.is_active == True
+        # ).first()
         
-        if existing_deck:
-            raise HTTPException(
-                status_code=400,
-                detail="A deck already exists for this file"
-            )
+        # if existing_deck:
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail="A deck already exists for this file"
+        #     )
 
         deck = FlashcardDeck(
             user_id=user_id,

@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from agents.utils.pdf_processor import PDFProcessor 
+from agents.utils.pdf_processor import PDFProcessor
 from typing import List, Dict, Any, Optional  
 
 load_dotenv()
@@ -16,18 +16,17 @@ class RAGApplication:
         """Initialize RAG application with necessary components."""
         openai_api_key = os.getenv("OPENAI_API_KEY")
         pinecone_api_key = os.getenv("PINECONE_API_KEY")
+        pinecone_index_name = os.getenv("PINECONE_INDEX_NAME","pdf-semantic-chunking")
         
-        if not openai_api_key or not pinecone_api_key:
+        if not openai_api_key or not pinecone_api_key or not pinecone_index_name:
             raise ValueError("Missing API keys. Check your .env file.")
 
         self.llm = ChatOpenAI(model="learnlm-1.5-pro-experimental",base_url="https://generativelanguage.googleapis.com/v1beta/openai/", temperature=0.7, api_key=gemini_api_key)
         self.pdf_processor = PDFProcessor(
             openai_api_key=openai_api_key,
-            pinecone_api_key=pinecone_api_key
+            pinecone_api_key=pinecone_api_key,
+            pinecone_index_name=pinecone_index_name
         )
-        
-        # Create Pinecone index
-        self.pdf_processor.create_index("pdf-embeddings-123123123")
         
         # Track current PDF context
         self.current_pdf = None
@@ -96,6 +95,10 @@ Answer:""")
             # Get relevant chunks using Pinecone
             relevant_chunks = self.pdf_processor.query(question, target_pdf, top_k)
             
+            # Debug logging
+            print(f"DEBUG: Querying document '{pdf_title}' with question: {question}")
+            print(f"DEBUG: Retrieved {len(relevant_chunks)} relevant chunks")
+
             # Generate answer using LangChain
             answer = self.generate_answer(question, relevant_chunks)
             
