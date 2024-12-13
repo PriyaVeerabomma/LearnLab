@@ -84,6 +84,24 @@ async def login(
         "token_type": "bearer"
     }
 
+
+@router.get("/me", response_model=User)
+async def get_current_user_details(
+        current_user: UserModel = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    """
+    Get details of the currently authenticated user
+    """
+    # Refresh the user data from database to get latest state
+    user = db.query(UserModel).filter(UserModel.id == current_user.id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User no longer exists"
+        )
+
+    return user
 @router.post("/refresh-token", response_model=Token)
 async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
     """
