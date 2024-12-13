@@ -19,7 +19,13 @@ env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY}}
   PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY}}
   NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-  NODE_VERSION: '18'
+  GOOGLE_API_CREDENTIALS: ${{ secrets.GOOGLE_API_CREDENTIALS }}
+  UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+  UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+  ELEVENLABS_VOICE_ID_1: ${{ secrets.ELEVENLABS_VOICE_ID_1 }}
+  ELEVENLABS_VOICE_ID_2: ${{ secrets.ELEVENLABS_VOICE_ID_2 }}
 
 jobs:
   build:
@@ -67,46 +73,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
-
-      # Step 6: Build and push Streamlit Docker image
-      # - name: Build and push Streamlit Docker image
-      #   env:
-      #     DOCKER_STREAMLIT_IMAGE: ${{ secrets.DOCKER_USERNAME }}/learnlab-streamlit
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: ./streamlit-ui
-      #     target: production
-      #     push: true
-      #     tags: |
-      #       ${{ env.DOCKER_STREAMLIT_IMAGE }}:latest
-      #       ${{ env.DOCKER_STREAMLIT_IMAGE }}:${{ github.sha }}
-      #     platforms: linux/amd64,linux/arm64
-      #     cache-from: type=local,src=/tmp/.buildx-cache
-      #     cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
         
-      # # Step 4: Build and push Docker images
-      # - name: Build and push backend Docker image
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: ./backend
-      #     target: production
-      #     push: true
-      #     tags: |
-      #       ${{ env.DOCKER_IMAGE }}:latest
-      #       ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
-      #     platforms: linux/amd64,linux/arm64
-
-      # # Step 5: Build and push Streamlit Docker image
-      # - name: Build and push Streamlit Docker image
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: ./streamlit-ui
-      #     target: production
-      #     push: true
-      #     tags: |
-      #       ${{ env.DOCKER_IMAGE }}:latest
-      #       ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
-      #     platforms: linux/amd64,linux/arm64
+      # Step 6: Build and push frontend Docker image
       - name: Build and push frontend Docker image
         env:
           DOCKER_FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/learnlab-frontend
