@@ -69,20 +69,20 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
       # Step 6: Build and push Streamlit Docker image
-      - name: Build and push Streamlit Docker image
-        env:
-          DOCKER_STREAMLIT_IMAGE: ${{ secrets.DOCKER_USERNAME }}/learnlab-streamlit
-        uses: docker/build-push-action@v4
-        with:
-          context: ./streamlit-ui
-          target: production
-          push: true
-          tags: |
-            ${{ env.DOCKER_STREAMLIT_IMAGE }}:latest
-            ${{ env.DOCKER_STREAMLIT_IMAGE }}:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+      # - name: Build and push Streamlit Docker image
+      #   env:
+      #     DOCKER_STREAMLIT_IMAGE: ${{ secrets.DOCKER_USERNAME }}/learnlab-streamlit
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: ./streamlit-ui
+      #     target: production
+      #     push: true
+      #     tags: |
+      #       ${{ env.DOCKER_STREAMLIT_IMAGE }}:latest
+      #       ${{ env.DOCKER_STREAMLIT_IMAGE }}:${{ github.sha }}
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=local,src=/tmp/.buildx-cache
+      #     cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
         
       # # Step 4: Build and push Docker images
       # - name: Build and push backend Docker image

@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// import { useEffect, useState } from "react";
 
 export default function UploadPage() {
   const router = useRouter();
+  // const [isLoading, setIsLoading] = useState(true);
+  // const [error, setError] = useState<Error | null>(null);
   
   return (
     <DashboardLayout>

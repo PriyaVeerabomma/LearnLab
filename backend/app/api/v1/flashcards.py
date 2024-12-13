@@ -15,16 +15,16 @@ from app.services.flashcard_service import FlashcardService
 
 router = APIRouter()
 
-# @router.post("/decks", response_model=DeckWithFile)
-# async def create_deck(
-#     deck_data: DeckCreate,
-#     db: Session = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     """Create a new flashcard deck for a file"""
-#     service = FlashcardService(db)
-#     deck = service.create_deck(current_user.id, deck_data)
-#     return DeckWithFile.from_orm(deck)
+@router.post("/decks", response_model=DeckWithFile)
+async def create_deck(
+    deck_data: DeckCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new flashcard deck for a file"""
+    service = FlashcardService(db)
+    deck = service.create_deck(current_user.id, deck_data)
+    return DeckWithFile.from_orm(deck)
 
 @router.get("/decks/{file_id}", response_model=List[DeckWithFile])
 async def get_user_decks(
