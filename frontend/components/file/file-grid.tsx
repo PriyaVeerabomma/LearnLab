@@ -23,7 +23,7 @@ export function FileGrid() {
   const { toast } = useToast();
   const router = useRouter();
   const handleCardClick = (file: FileResponse) => {
-    setSelectedFile
+    setSelectedFile(file)
     router.push(`/dashboard/${file.id}`);
   };
 

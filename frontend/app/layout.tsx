@@ -2,7 +2,7 @@
 
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/providers/theme-provider';
+import { ThemeProvider } from "next-themes"
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { WebSocketProvider } from '@/components/providers/websocket-provider';
 import { Toaster } from "@/components/ui/toaster"

@@ -1,82 +1,35 @@
-# Development Stage
-FROM python:3.9.6-slim
+# Use the same base image as in docker-compose
+FROM apache/airflow:2.10.3
 
-# Prevent apt from showing prompts
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ENV POETRY_VERSION=1.8.2
-ENV POETRY_HOME="/opt/poetry"
-ENV POETRY_VIRTUALENVS_CREATE=false
-ENV PATH="$POETRY_HOME/bin:$PATH"
-ENV AIRFLOW_HOME=/opt/airflow
-
-# Install system dependencies as root
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    git \
-    libpq-dev \
-    netcat \
+
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        git \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry - Uses the established POETRY_HOME
-RUN curl -sSL https://install.python-poetry.org | python3 - && \
-    chmod a+x /opt/poetry/bin/poetry && \
-    poetry config virtualenvs.create false
+# Install poetry
+ENV POETRY_HOME="/opt/poetry" \
+    POETRY_VERSION=1.7.1
+ENV PATH="$POETRY_HOME/bin:$PATH"
 
-# Create airflow user and set up directories
-RUN useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow && \
-    mkdir -p ${AIRFLOW_HOME}/dags ${AIRFLOW_HOME}/logs ${AIRFLOW_HOME}/plugins ${AIRFLOW_HOME}/config && \
-    chown -R airflow:airflow ${AIRFLOW_HOME}
+RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=$POETRY_HOME python3 - --version $POETRY_VERSION \
+    && chmod a+x /opt/poetry/bin/poetry
+
+# Switch to airflow user for subsequent operations
+USER airflow
 
 # Copy poetry files
-COPY pyproject.toml poetry.lock ./
+COPY --chown=airflow:root pyproject.toml poetry.lock /opt/airflow/
 
-# Install dependencies as root
-RUN poetry install --no-interaction --no-root && \
-    chown -R airflow:airflow /usr/local/lib/python3.9/site-packages/ && \
-    chown -R airflow:airflow /usr/local/bin/
+# Configure poetry and install dependencies
+WORKDIR /opt/airflow
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi
 
-# Create initialization script
-RUN echo '#!/bin/bash\n\
-    set -e\n\
-    \n\
-    airflow() {\n\
-    poetry run airflow "$@"\n\
-    }\n\
-    \n\
-    # Wait for PostgreSQL
-    until nc -z -v -w30 db 5432; do\n\
-    echo "Waiting for PostgreSQL..."\n\
-    sleep 2\n\
-    done\n\
-    \n\
-    # Initialize Airflow database\n\
-    airflow db migrate\n\
-    \n\
-    # Create admin user\n\
-    airflow users create \\\n\
-    --username admin \\\n\
-    --firstname admin \\\n\
-    --lastname admin \\\n\
-    --role Admin \\\n\
-    --email admin@admin.com \\\n\
-    --password admin\n\
-    \n\
-    # Start webserver\n\
-    exec airflow webserver\n' > /entrypoint.sh && \
-    chmod +x /entrypoint.sh
-
-# Switch to airflow user and directory
-USER airflow
-WORKDIR ${AIRFLOW_HOME}
-
-# Copy Airflow files
-COPY --chown=airflow:airflow dags ${AIRFLOW_HOME}/dags
-COPY --chown=airflow:airflow config ${AIRFLOW_HOME}/config
-
-EXPOSE 8080
-
-# Start with initialization script
-CMD ["/entrypoint.sh"]
+# Copy the rest of the application
+COPY --chown=airflow:root . /opt/airflow/

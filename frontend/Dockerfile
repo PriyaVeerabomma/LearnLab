@@ -10,6 +10,10 @@ RUN npm ci --force
 # Copy rest of the application
 COPY . .
 
+# Build argument for API URL
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Expose port
 EXPOSE 3000
 
@@ -25,9 +29,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --force
 
-#Modify at the later stage
-#RUN npm ci --only=production
-RUN npm ci 
+# Build argument for API URL
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Copy source
 COPY . .
 

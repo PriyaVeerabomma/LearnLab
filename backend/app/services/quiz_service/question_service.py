@@ -3,6 +3,8 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
+from sqlalchemy.orm import selectinload
+
 
 from ...core.logger import setup_logger, log_error
 from ...models.quiz import (
@@ -198,7 +200,10 @@ class QuestionService:
             return self.db.query(Question).filter(
                 Question.quiz_id == quiz_id,
                 Question.is_active == True
-            ).all()
+            ).options(
+                selectinload(Question.concepts),
+                selectinload(Question.multiple_choice_options),
+                selectinload(Question.subjective_answer)).all()
             
         except SQLAlchemyError as e:
             log_error(logger, e, {

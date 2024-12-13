@@ -51,7 +51,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Connected",
           description: "Real-time notifications enabled",
-          variant: "success",
+          variant: "default",
           duration: 3000
         });
         isInitialMount.current = false;
@@ -66,7 +66,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           toast({
             title: data.title,
             description: data.message,
-            variant: data.variant as "default" | "destructive" | "success" | undefined,
+            variant: "default",
             duration: data.duration || 5000
           });
         }

@@ -15,26 +15,36 @@ from ....core.logger import setup_logger, log_error
 logger = setup_logger(__name__)
 router = APIRouter()
 
-@router.post("", response_model=QuestionInDB)
-async def create_question(
+@router.get("/{quiz_id}", response_model=List[QuestionWithOptions | QuestionWithAnswer])
+async def get_questions(
     quiz_id: UUID,
-    question_data: QuestionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Create a new question"""
-    logger.info(f"Creating question for quiz {quiz_id}")
+    """Get all questions for a quiz"""
+    logger.info(f"Fetching all questions for quiz {quiz_id}")
     
     try:
-        # Validate quiz access
         quiz_service = QuizService(db)
         if not quiz_service.validate_user_access(quiz_id, current_user.id):
-            logger.warning(f"User {current_user.id} attempted to create question for unauthorized quiz {quiz_id}")
-            raise HTTPException(status_code=403, detail="Not authorized to add questions to this quiz")
+            logger.warning(f"User {current_user.id} attempted to access unauthorized questions for quiz {quiz_id}")
+            raise HTTPException(status_code=403, detail="Not authorized to access these questions")
             
         question_service = QuestionService(db)
-        question = await question_service.create_question(quiz_id, question_data)
-        return question
+        questions = question_service.get_quiz_questions(quiz_id)
+        for question in questions:
+            db.refresh(question)
+            
+        # Return appropriate schema based on question type
+        question_schemas = []
+        for question in questions:
+            print(question.question_type)            
+            if question.question_type == 'multiple_choice':
+                question_schemas.append(QuestionWithOptions.from_orm(question))
+            else:
+                question_schemas.append(QuestionWithAnswer.from_orm(question))
+                
+        return question_schemas
         
     except HTTPException as e:
         raise e
@@ -43,7 +53,7 @@ async def create_question(
             'quiz_id': str(quiz_id),
             'user_id': str(current_user.id)
         })
-        raise HTTPException(status_code=500, detail="Failed to create question")
+        raise HTTPException(status_code=500, detail="Failed to fetch questions")
 
 @router.get("/{question_id}", response_model=QuestionWithOptions | QuestionWithAnswer)
 async def get_question(
@@ -56,8 +66,7 @@ async def get_question(
     
     try:
         question_service = QuestionService(db)
-        question = question_service.get_question(question_id)
-        
+        question = question_service.get_question(question_id)        
         if not question:
             logger.warning(f"Question {question_id} not found")
             raise HTTPException(status_code=404, detail="Question not found")

@@ -16,15 +16,15 @@ export async function fetchClient(
     .find(row => row.startsWith('access_token='))
     ?.split('=')[1];
 
-  const headers: HeadersInit = {
-    ...options.headers,
-  };
+    const headers: Record<string, string> = {
+      ...(options.headers as Record<string, string>),
+    };
 
   if (authRequired) {
     if (!token) {
       throw new Error('No access token found');
     }
-    headers.Authorization = `Bearer ${decodeURIComponent(token)}`;
+    headers['Authorization'] = `Bearer ${decodeURIComponent(token)}`;
   }
 
   if (options.body && !(options.body instanceof FormData)) {

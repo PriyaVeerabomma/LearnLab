@@ -31,10 +31,10 @@ FROM base AS development
 COPY . .
 
 # Expose port for development
-EXPOSE 8000
+EXPOSE 8000 5678
 
 # Command for development with hot reload
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["poetry", "run", "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # ------------------------------------------
 # Production Stage

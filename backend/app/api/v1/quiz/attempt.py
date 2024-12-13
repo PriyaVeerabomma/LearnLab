@@ -133,9 +133,9 @@ async def get_attempt(
         })
         raise HTTPException(status_code=500, detail="Failed to fetch attempt")
 
-@router.get("", response_model=List[AttemptInDB])
+@router.get("/{quiz_id}", response_model=List[AttemptInDB])
 async def list_attempts(
-    quiz_id: UUID = None,
+    quiz_id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

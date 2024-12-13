@@ -6,14 +6,18 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { fetchClient } from '@/lib/api/fetch-client';
 import { API_ROUTES } from '@/config';
+import { use } from 'react';
 
 export default function FileLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
-  params: { fileId: string };
+  params: Promise<{ fileId: string }>;
 }) {
+  // Unwrap the `params` promise using React.use()
+  const { fileId } = use(params);
+  
   const { toast } = useToast();
   const router = useRouter();
   const { selectedFile, setSelectedFile } = useFileStore();
@@ -22,7 +26,7 @@ export default function FileLayout({
     // Fetch file details if not already in store
     const fetchFile = async () => {
       try {
-        const response = await fetchClient(API_ROUTES.files.get(params.fileId));
+        const response = await fetchClient(API_ROUTES.files.get(fileId));
         
         if (!response.ok) {
           if (response.status === 404) {
@@ -49,10 +53,10 @@ export default function FileLayout({
       }
     };
 
-    if (!selectedFile || selectedFile.id !== params.fileId) {
+    if (!selectedFile || selectedFile.id !== fileId) {
       fetchFile();
     }
-  }, [params.fileId, selectedFile, setSelectedFile, router, toast]);
+  }, [fileId, selectedFile, setSelectedFile, router, toast]);
 
   if (!selectedFile) {
     return null; // Or a loading spinner

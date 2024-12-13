@@ -4,18 +4,18 @@
 import { FileLayout } from "@/components/layout/file-layout";
 import { useFileStore } from "@/store/file-store";
 import { PDFViewer } from '@/components/file/pdf-viewer';
-
+import {use} from 'react';
+type Params = Promise<{ fileId: string }>;
 interface PDFViewerPageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params
 }
 
 export default function PDFViewerPage({ params }: PDFViewerPageProps) {
+  const unwrappedParams = use(params);
   const { selectedFile } = useFileStore();
 
   return (
-    <FileLayout fileId={params.fileId}>
+    <FileLayout fileId={unwrappedParams.fileId}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
