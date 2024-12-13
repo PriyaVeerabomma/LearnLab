@@ -21,7 +21,17 @@ load_dotenv()
 
 router = APIRouter()
 
-# Initialize PodcastGenerator
+# @router.post("/decks", response_model=DeckWithFile)
+# async def create_deck(
+#     deck_data: DeckCreate,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Create a new flashcard deck for a file"""
+#     service = FlashcardService(db)
+#     deck = service.create_deck(current_user.id, deck_data)
+#     return DeckWithFile.from_orm(deck)
+# # Initialize PodcastGenerator
 podcast_generator = PodcastGenerator()
 
 # Generate Deck of Flashcards from Flashcard Agent

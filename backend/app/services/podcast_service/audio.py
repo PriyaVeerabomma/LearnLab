@@ -98,6 +98,18 @@ class AudioService:
                 detail="Failed to process uploaded file"
             )
 
+    async def get_audio_duration_from_s3(self, s3_key: str) -> int:
+        """Get duration of audio file already in S3"""
+        # Download to temporary file
+        temp_file = await self.s3_service.download_to_temp(s3_key)
+        try:
+            # Get duration using existing method
+            return await self.get_audio_duration(temp_file)
+        finally:
+            # Clean up
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+
     async def upload_podcast(
         self, 
         file: UploadFile, 

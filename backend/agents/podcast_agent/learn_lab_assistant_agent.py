@@ -352,6 +352,7 @@ class PodcastGenerator:
             
         return state
 
+    
     def generate_content(self, question: str, pdf_title: str, output_type: str = "podcast") -> Dict[str, Any]:
         """Generate either a podcast or flashcards based on the specified output type"""
         # First retrieve RAG context regardless of output type
