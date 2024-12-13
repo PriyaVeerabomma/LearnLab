@@ -16,6 +16,7 @@ from agents.podcast_agent.learn_lab_assistant_agent import PodcastGenerator
 from app.services.flashcard_service.deck_service import DeckService
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 router = APIRouter()
