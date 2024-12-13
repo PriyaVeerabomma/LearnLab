@@ -9,6 +9,7 @@ import { Search, Clock } from 'lucide-react';
 import { debounce } from 'lodash';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { fetchClient } from '@/lib/api/fetch-client';
+import { API_BASE_URL } from '@/config';
 
 interface TranscriptLine {
   startTime: number;
@@ -25,40 +26,6 @@ export function PodcastTranscript() {
   const activeLineRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const fetchTranscript = async () => {
-      if (!currentPodcast) {
-        setTranscript([]);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      
-      try {
-        // Choose VTT over TXT if available
-        const url = currentPodcast.transcript_vtt_url || currentPodcast.transcript_txt_url;
-        if (!url) throw new Error('No transcript available');
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to load transcript');
-        
-        const text = await response.text();
-        const lines = url.includes('.vtt') 
-          ? parseVTT(text)
-          : parseTextTranscript(text);
-        
-        setTranscript(lines);
-      } catch (error) {
-        console.error('Failed to load transcript:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load transcript');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTranscript();
-  }, [currentPodcast]);
 
   // Parse WebVTT format
   const parseVTT = (vttText: string): TranscriptLine[] => {
@@ -99,6 +66,29 @@ export function PodcastTranscript() {
     }));
   };
 
+  useEffect(() => {
+    const fetchTranscript = async () => {
+      try {
+        // Simulate fetching transcript data
+        const response = await fetchClient(`${API_BASE_URL}/api/transcripts/${currentPodcast}`);
+        const data = await response.json();
+
+        if (data.format === 'text') {
+          const parsedTranscript = parseTextTranscript(data.transcript);
+          setTranscript(parsedTranscript);
+        } else if (data.format === 'vtt') {
+          const parsedTranscript = parseVTT(data.transcript);
+          setTranscript(parsedTranscript);
+        } else {
+          console.error('Unsupported transcript format');
+        }
+      } catch (error) {
+        console.error('Error fetching transcript:', error);
+      }
+    };
+
+    fetchTranscript();
+  }, [currentPodcast, parseTextTranscript, parseVTT]);
   // Convert VTT timestamp to seconds
   const timeToSeconds = (timeStr: string): number => {
     const [hours, minutes, secondsMs] = timeStr.split(':');
@@ -132,9 +122,9 @@ export function PodcastTranscript() {
   // Filter and highlight search results
   const getFilteredTranscript = () => {
     if (!searchQuery) return transcript;
-    
+
     const query = searchQuery.toLowerCase();
-    return transcript.filter(line => 
+    return transcript.filter(line =>
       line.text.toLowerCase().includes(query)
     );
   };
@@ -196,18 +186,18 @@ export function PodcastTranscript() {
             {searchQuery ? 'No matches found' : 'No transcript available'}
           </div>
         ) : (
-          <ScrollArea 
+          <ScrollArea
             ref={scrollAreaRef}
             className="h-[500px] pr-4"
           >
             <div className="space-y-4">
               {filteredTranscript.map((line, index) => {
                 const isActive = !searchQuery && index === activeLine;
-                const highlightedText = searchQuery 
+                const highlightedText = searchQuery
                   ? line.text.replace(
-                      new RegExp(searchQuery, 'gi'),
-                      match => `<mark class="bg-accent text-accent-foreground px-1 rounded">${match}</mark>`
-                    )
+                    new RegExp(searchQuery, 'gi'),
+                    match => `<mark class="bg-accent text-accent-foreground px-1 rounded">${match}</mark>`
+                  )
                   : line.text;
 
                 return (
@@ -224,7 +214,7 @@ export function PodcastTranscript() {
                       <Clock className="h-3 w-3" />
                       {formatTime(line.startTime)}
                     </div>
-                    <p 
+                    <p
                       className="text-sm leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: highlightedText }}
                     />
