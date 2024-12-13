@@ -33,7 +33,8 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
     error,
     startQuiz,
     submitResponse,
-    completeQuiz
+    completeQuiz,
+    setCurrentQuestionIndex
   } = useQuizStore();
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
     if (isLastQuestion) {
       try {
         const completedAttempt = await completeQuiz();
-        // Navigate to results page (we'll create this later)
+        // Navigate to results page
         router.push(
           `/dashboard/${fileId}/quiz/${quizId}/attempt/${completedAttempt.id}/results`
         );
@@ -94,6 +95,16 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
           variant: "destructive"
         });
       }
+    } else {
+      // Move to next question
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  const handleBack = () => {
+    // Show confirmation dialog before leaving quiz
+    if (window.confirm("Are you sure you want to leave? Your progress will be saved.")) {
+      router.push(`/dashboard/${fileId}/quiz`);
     }
   };
 
@@ -109,7 +120,7 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
           <Button
             variant="ghost"
             className="gap-2"
-            onClick={() => router.push(`/dashboard/${fileId}/quiz`)}
+            onClick={handleBack}
           >
             <ChevronLeft className="h-4 w-4" />
             Back to Quizzes

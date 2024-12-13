@@ -28,6 +28,7 @@ export interface QuestionBase {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  concepts: QuestionConcept[];
 }
 
 export interface MultipleChoiceOption {
@@ -52,13 +53,13 @@ export interface QuestionConcept {
 }
 
 export interface QuestionWithOptions extends QuestionBase {
-  options: MultipleChoiceOption[];
-  concepts: QuestionConcept[];
+  question_type: 'multiple_choice';
+  multiple_choice_options: MultipleChoiceOption[];
 }
 
 export interface QuestionWithAnswer extends QuestionBase {
-  answer: SubjectiveAnswer;
-  concepts: QuestionConcept[];
+  question_type: 'subjective';
+  subjective_answer: SubjectiveAnswer;
 }
 
 export type Question = QuestionWithOptions | QuestionWithAnswer;
@@ -68,7 +69,7 @@ export interface QuestionResponse {
   attempt_id: string;
   question_id: string;
   response: string;
-  is_correct?: boolean;
+  is_correct: boolean;
   confidence_score?: number;
   time_taken: number;
   created_at: string;
@@ -100,6 +101,7 @@ interface QuizStore {
   // Quiz flow state
   isLoading: boolean;
   error: string | null;
+  submittingResponse: boolean;
   
   // Basic actions
   setCurrentQuiz: (quiz: Quiz | null) => void;
@@ -127,6 +129,7 @@ const initialState = {
   responses: {},
   isLoading: false,
   error: null,
+  submittingResponse: false,
 };
 
 export const useQuizStore = create<QuizStore>((set, get) => ({
@@ -201,7 +204,7 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
     const { currentAttempt } = get();
     if (!currentAttempt) throw new Error('No active attempt');
 
-    set({ isLoading: true, error: null });
+    set({ submittingResponse: true, error: null });
     try {
       const responseData = {
         question_id: questionId,
@@ -217,19 +220,29 @@ export const useQuizStore = create<QuizStore>((set, get) => ({
         }
       );
       
-      if (!apiResponse.ok) throw new Error('Failed to submit response');
+      if (!apiResponse.ok) {
+        if (apiResponse.status === 400) {
+          // Question already answered, fetch the existing response
+          const existingResponse = get().responses[questionId];
+          if (existingResponse) {
+            set({ submittingResponse: false });
+            return existingResponse;
+          }
+        }
+        throw new Error('Failed to submit response');
+      }
+
       const submittedResponse = await apiResponse.json();
       
-      // Save response and move to next question
+      // Save response but don't advance to next question yet
       set((state) => ({
         responses: { ...state.responses, [questionId]: submittedResponse },
-        currentQuestionIndex: state.currentQuestionIndex + 1,
-        isLoading: false
+        submittingResponse: false
       }));
 
       return submittedResponse;
     } catch (error) {
-      set({ error: 'Failed to submit response', isLoading: false });
+      set({ error: 'Failed to submit response', submittingResponse: false });
       throw error;
     }
   },
