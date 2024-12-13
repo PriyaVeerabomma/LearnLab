@@ -38,6 +38,8 @@ semantic-router = "^0.0.72"
 pypdf2 = "^3.0.1"
 pinecone = "^5.4.2"
 debugpy = "^1.6.7"
+upstash-vector = "^0.6.0"
+
 
 
 [tool.poetry.group.dev.dependencies]

@@ -6,6 +6,9 @@ from typing import Optional
 import uuid
 import time
 from botocore.exceptions import BotoCoreError, ClientError
+import tempfile
+import os
+
 
 logger = setup_logger(__name__)
 
@@ -116,6 +119,50 @@ class S3Service:
             raise HTTPException(
                 status_code=500,
                 detail="Failed to generate download URL"
+            )
+
+    async def download_to_temp(self, s3_key: str) -> str:
+        """
+        Downloads a file from S3 to a temporary location and returns the local file path.
+        """
+        import tempfile
+        import os
+
+        logger.debug(f"Downloading file from S3: {s3_key}")
+
+        try:
+            # Create a temporary file
+            temp_fd, temp_path = tempfile.mkstemp()
+            os.close(temp_fd)  # Close the file descriptor
+
+            # Download the file
+            self.s3_client.download_file(
+                self.bucket_name,
+                s3_key,
+                temp_path
+            )
+
+            logger.debug(f"Successfully downloaded file to: {temp_path}")
+            return temp_path
+
+        except ClientError as e:
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'download_to_temp',
+                'error_code': e.response['Error']['Code']
+            })
+            raise HTTPException(
+                status_code=500,
+                detail=f"AWS S3 error: {e.response['Error']['Message']}"
+            )
+        except Exception as e:
+            log_error(logger, e, {
+                's3_key': s3_key,
+                'operation': 'download_to_temp'
+            })
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to download file from S3"
             )
 
     async def delete_file(self, s3_key: str) -> bool:
