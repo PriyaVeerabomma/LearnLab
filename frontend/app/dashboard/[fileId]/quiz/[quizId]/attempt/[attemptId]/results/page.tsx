@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileLayout } from "@/components/layout/file-layout";
@@ -36,8 +36,13 @@ export default function QuizResultsPage( props : QuizResultsPageProps) {
 
   const [showAnswers, setShowAnswers] = useState(false);
 
+  useEffect(() => {
+    if (!currentQuiz || !currentAttempt) {
+      router.push(`/dashboard/${params.fileId}/quiz`);
+    }
+  }, [currentQuiz, currentAttempt, params.fileId, router]);
+
   if (!currentQuiz || !currentAttempt) {
-    router.push(`/dashboard/${params.fileId}/quiz`);
     return null;
   }
 

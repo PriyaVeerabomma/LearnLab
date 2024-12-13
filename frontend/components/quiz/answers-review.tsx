@@ -19,10 +19,10 @@ interface AnswersReviewProps {
 
 export function AnswersReview({ questions, responses }: AnswersReviewProps) {
   const getQuestionContent = (question: Question, response: QuestionResponse) => {
-    if ('options' in question) {
+    if ('multiple_choice_options' in question) {
       return (
         <div className="space-y-3">
-          {question.options.map((option) => (
+          {question.multiple_choice_options.map((option) => (
             <div 
               key={option.id}
               className={cn(
@@ -53,7 +53,7 @@ export function AnswersReview({ questions, responses }: AnswersReviewProps) {
         </div>
         <div className="p-3 rounded-lg border bg-success/10 border-success">
           <div className="font-medium mb-1">Correct Answer:</div>
-          <div>{question.answer.answer}</div>
+          <div>{question.explanation}</div>
         </div>
       </div>
     );
