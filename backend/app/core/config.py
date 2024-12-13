@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 DATABASE_URL=os.getenv("DATABASE_URL")
-class Settings():
+class Settings(BaseSettings):
     # Database Configuration
-    DATABASE_URL: str 
+    DATABASE_URL: str
 
     # JWT Configuration
     JWT_SECRET_KEY: str
