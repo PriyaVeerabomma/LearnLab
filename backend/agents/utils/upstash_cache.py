@@ -1,6 +1,6 @@
 import os
 from typing import Optional, Dict, Any
-from upstash_semantic_cache.semantic_cache import SemanticCache
+from agents.utils.upstash_semantic_cache.semantic_cache import SemanticCache
 from datetime import datetime
 import json
 

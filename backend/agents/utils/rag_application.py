@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
-from pdf_processor import PDFProcessor 
+from agents.utils.pdf_processor import PDFProcessor
 from typing import List, Dict, Any, Optional  
 
 load_dotenv()
@@ -26,8 +26,6 @@ class RAGApplication:
             pinecone_api_key=pinecone_api_key
         )
         
-        # Create Pinecone index
-        self.pdf_processor.create_index("pdf-embeddings-123123123")
         
         # Track current PDF context
         self.current_pdf = None

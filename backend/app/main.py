@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from .api.v1 import auth, files, flashcards, podcast, quiz, websocket, sample_data
+from .api.v1 import auth, files, flashcards, podcast, quiz, websocket, sample_data, social
 from .core.config import settings
 from .core.database import engine, Base
 
@@ -78,6 +78,12 @@ app.include_router(
     sample_data.router,
     prefix="/api/sample-data",
     tags=["Sample Data"]
+)
+
+app.include_router(
+    social.router,
+    prefix="/api/social",
+    tags=["Social Media"]
 )
 
 @app.get("/")
