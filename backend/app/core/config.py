@@ -6,7 +6,7 @@ load_dotenv()
 DATABASE_URL=os.getenv("DATABASE_URL")
 class Settings(BaseSettings):
     # Database Configuration
-    DATABASE_URL: str 
+    DATABASE_URL: str
 
     # JWT Configuration
     JWT_SECRET_KEY: str
@@ -24,6 +24,18 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     ENVIRONMENT: str = "development"
     PROJECT_NAME: str = "LearnLab"
+
+    OPENAI_API_KEY: str
+    PINECONE_API_KEY: str
+    PINECONE_INDEX_NAME: str
+    NEXT_PUBLIC_API_URL: str
+    GOOGLE_API_CREDENTIALS: str
+    UPSTASH_VECTOR_REST_URL: str
+    UPSTASH_VECTOR_REST_TOKEN: str
+    GEMINI_API_KEY: str
+    ELEVENLABS_API_KEY: str
+    ELEVENLABS_VOICE_ID_1: str
+    ELEVENLABS_VOICE_ID_2: str
 
     # API Configuration
     API_V1_STR: str = "/api/v1"

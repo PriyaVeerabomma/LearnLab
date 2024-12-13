@@ -29,8 +29,16 @@ env:
   REFRESH_TOKEN_EXPIRE_DAYS: '7'
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY}}
   PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY}}
+  PINECONE_INDEX_NAME: ${{ secrets.PINECONE_INDEX_NAME}} 
   NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+  GOOGLE_API_CREDENTIALS: ${{ secrets.GOOGLE_API_CREDENTIALS }}
+  UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+  UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
+  ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+  ELEVENLABS_VOICE_ID_1: ${{ secrets.ELEVENLABS_VOICE_ID_1 }}
+  ELEVENLABS_VOICE_ID_2: ${{ secrets.ELEVENLABS_VOICE_ID_2 }}
   
 jobs:
   deploy:
@@ -79,6 +87,17 @@ jobs:
             JWT_ALGORITHM
             JWT_SECRET_KEY
             REFRESH_TOKEN_EXPIRE_DAYS
+            OPENAI_API_KEY
+            PINECONE_API_KEY
+            PINECONE_INDEX_NAME
+            NEXT_PUBLIC_API_URL
+            GOOGLE_API_CREDENTIALS
+            UPSTASH_VECTOR_REST_URL
+            UPSTASH_VECTOR_REST_TOKEN
+            GEMINI_API_KEY
+            ELEVENLABS_API_KEY
+            ELEVENLABS_VOICE_ID_1
+            ELEVENLABS_VOICE_ID_2
           )
           for secret in "${required_secrets[@]}"; do
             if [ -z "${!secret}" ]; then
@@ -109,6 +128,16 @@ jobs:
           JWT_ALGORITHM="${{ secrets.JWT_ALGORITHM }}"
           JWT_SECRET_KEY="${{ secrets.JWT_SECRET_KEY }}"
           REFRESH_TOKEN_EXPIRE_DAYS="${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}"
+          OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+          PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}"
+          PINECONE_INDEX_NAME="${{ secrets.PINECONE_INDEX_NAME }}"
+          GOOGLE_API_CREDENTIALS="${{ secrets.GOOGLE_API_CREDENTIALS }}"
+          UPSTASH_VECTOR_REST_URL="${{ secrets.UPSTASH_VECTOR_REST_URL }}"
+          UPSTASH_VECTOR_REST_TOKEN="${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}"
+          GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
+          ELEVENLABS_API_KEY="${{ secrets.ELEVENLABS_API_KEY }}"
+          ELEVENLABS_VOICE_ID_1="${{ secrets.ELEVENLABS_VOICE_ID_1 }}"
+          ELEVENLABS_VOICE_ID_2="${{ secrets.ELEVENLABS_VOICE_ID_2 }}"
           EOL
 
           if [ ! -f .env ]; then
