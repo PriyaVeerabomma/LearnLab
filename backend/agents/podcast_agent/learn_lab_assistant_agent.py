@@ -14,7 +14,7 @@ from langchain.output_parsers import PydanticOutputParser
 from agents.utils.rag_application import RAGApplication
 from datetime import datetime
 from agents.utils.podcast_s3_storage import S3Storage
-from agents.utils.semantic_cache import PodcastCache
+from agents.utils.upstash_cache import PodcastCache
 from agents.utils.flashcard_agent import ContentEngine, FlashcardSet, Flashcard
 from agents.utils.qna_agent import QuizGenerator, QuizSet
 from agents.utils.tweet_agent import TweetAgent, TweetContent
@@ -355,8 +355,16 @@ class PodcastGenerator:
     def generate_content(self, question: str, pdf_title: str, output_type: str = "podcast") -> Dict[str, Any]:
         """Generate either a podcast or flashcards based on the specified output type"""
         # First retrieve RAG context regardless of output type
+        print(f"DEBUG: Generating content for query: {question}, Output Type: {output_type}")
+        print(f"DEBUG: Using PDF Title: {pdf_title}")
         rag_response = self.rag_app.query_document(question, pdf_title)
 
+        
+        # Check for errors in RAG response
+        if "error" in rag_response:
+            print(f"ERROR: {rag_response['error']}")
+            raise ValueError(f"Failed to retrieve context: {rag_response['error']}")
+        
         if output_type == "quiz":
             graph = self.create_graph()
             
