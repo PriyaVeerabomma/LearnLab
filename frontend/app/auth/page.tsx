@@ -4,8 +4,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/login-form';
 import { RegisterForm } from '@/components/auth/register-form';
+import { Suspense } from 'react';
 
-export default function AuthPage() {
+function AuthContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tab = searchParams.get('tab') || 'login';
@@ -60,5 +61,13 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthContent />
+    </Suspense>
   );
 }

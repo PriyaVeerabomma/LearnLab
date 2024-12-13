@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileLayout } from "@/components/layout/file-layout";
 import { QuestionView, QuizProgress } from "@/components/quiz";
@@ -9,14 +9,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 
+type QuizAttemptParams = Promise<{
+  fileId: string;
+  quizId: string;
+}>;
+
 interface QuizAttemptPageProps {
-  params: {
-    fileId: string;
-    quizId: string;
-  };
+  params: QuizAttemptParams;
 }
 
 export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
+  const resolvedParams = use(params);
+  const { fileId, quizId } = resolvedParams;
   const router = useRouter();
   const { toast } = useToast();
   const {
@@ -37,7 +41,7 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
       try {
         // If we don't have an active attempt, start one
         if (!currentAttempt) {
-          await startQuiz(params.quizId);
+          await startQuiz(quizId);
         }
       } catch (err) {
         toast({
@@ -45,12 +49,12 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
           description: "Failed to start quiz. Please try again.",
           variant: "destructive"
         });
-        router.push(`/dashboard/${params.fileId}/quiz`);
+        router.push(`/dashboard/${fileId}/quiz`);
       }
     };
 
     initializeQuiz();
-  }, [params.quizId, currentAttempt, startQuiz, router, params.fileId, toast]);
+  }, [quizId, currentAttempt, startQuiz, router, fileId, toast]);
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -81,7 +85,7 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
         const completedAttempt = await completeQuiz();
         // Navigate to results page (we'll create this later)
         router.push(
-          `/dashboard/${params.fileId}/quiz/${params.quizId}/attempt/${completedAttempt.id}/results`
+          `/dashboard/${fileId}/quiz/${quizId}/attempt/${completedAttempt.id}/results`
         );
       } catch (err) {
         toast({
@@ -98,14 +102,14 @@ export default function QuizAttemptPage({ params }: QuizAttemptPageProps) {
   }
 
   return (
-    <FileLayout fileId={params.fileId}>
+    <FileLayout fileId={fileId}>
       <div className="space-y-6">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
             className="gap-2"
-            onClick={() => router.push(`/dashboard/${params.fileId}/quiz`)}
+            onClick={() => router.push(`/dashboard/${fileId}/quiz`)}
           >
             <ChevronLeft className="h-4 w-4" />
             Back to Quizzes

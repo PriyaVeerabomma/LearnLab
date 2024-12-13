@@ -4,16 +4,14 @@
 import { FileLayout } from "@/components/layout/file-layout";
 import { useFileStore } from "@/store/file-store";
 import { PDFViewer } from '@/components/file/pdf-viewer';
-import React from "react";
-
+import {use} from 'react';
+type Params = Promise<{ fileId: string }>;
 interface PDFViewerPageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params
 }
 
 export default function PDFViewerPage({ params }: PDFViewerPageProps) {
-  const unwrappedParams = React.use(params);
+  const unwrappedParams = use(params);
   const { selectedFile } = useFileStore();
 
   return (

@@ -6,17 +6,15 @@ import { FileLayout } from "@/components/layout/file-layout";
 import { QuizList, QuizStats } from "@/components/quiz";
 import { useQuizStore } from "@/store/quiz-store";
 import { useToast } from "@/hooks/use-toast";
-import React from 'react';
-
+import {use} from 'react';
+type Params = Promise<{ fileId: string }>;
 interface QuizPageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params
 }
 
 export default function QuizPage({ params }: QuizPageProps) {
   const router = useRouter();
-  const unwrappedParams = React.use(params);
+  const unwrappedParams = use(params);
   const { toast } = useToast();
   const { 
     quizzes, 

@@ -15,19 +15,18 @@ import { use } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface FlashcardPageProps {
-  params: {
+  params: Promise<{
     fileId: string;
-  };
+  }>;
 }
-
 type StudyState = 'list' | 'study' | 'complete';
 
 export default function FlashcardPage({ params }: FlashcardPageProps) {
   // Unwrap params using React's `use()`
   const unwrappedParams = use(params);
-  console.log('Unwrapped params:', unwrappedParams);
+  const fileId = unwrappedParams.fileId;
   console.log("-------------")
-  console.log(unwrappedParams.fileId)
+  console.log(fileId)
 
   const [studyState, setStudyState] = useState<StudyState>('list');
   const { toast } = useToast();
@@ -51,8 +50,8 @@ export default function FlashcardPage({ params }: FlashcardPageProps) {
   } = useFlashcardStore();
 
   useEffect(() => {
-    console.log('Fetching initial decks for file:', unwrappedParams.fileId);
-    fetchDecks(unwrappedParams.fileId).catch((error) => {
+    console.log('Fetching initial decks for file:', fileId);
+    fetchDecks(fileId).catch((error) => {
       console.error('Failed to fetch decks:', error);
       toast({
         variant: "destructive",
@@ -60,7 +59,7 @@ export default function FlashcardPage({ params }: FlashcardPageProps) {
         description: "Failed to load flashcard decks"
       });
     });
-  }, [unwrappedParams.fileId, fetchDecks, toast]);
+  }, [fileId, fetchDecks, toast]);
 
   useEffect(() => {
     // Monitor studySessionComplete state
@@ -198,7 +197,7 @@ export default function FlashcardPage({ params }: FlashcardPageProps) {
                   Master concepts through spaced repetition
                 </p>
               </div>
-              <CreateDeckDialog fileId={unwrappedParams.fileId} />
+              <CreateDeckDialog fileId={fileId} />
             </div>
 
             {error && (
@@ -287,5 +286,5 @@ export default function FlashcardPage({ params }: FlashcardPageProps) {
     }
   };
 
-  return <FileLayout>{renderContent()}</FileLayout>;
+  return <FileLayout fileId={fileId}>{renderContent()}</FileLayout>;
 }

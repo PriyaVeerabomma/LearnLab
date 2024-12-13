@@ -7,16 +7,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Share2, Twitter, Linkedin } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React from "react";
+import {use} from "react";
 
+
+type Params = Promise<{ fileId: string }>
 interface SocialPageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params
 }
 
 export default function SocialPage({ params }: SocialPageProps) {
-  const unwrappedParams = React.use(params);
+  const unwrappedParams = use(params);
   return (
     <FileLayout fileId={unwrappedParams.fileId}>
       <div className="space-y-6">

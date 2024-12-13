@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileLayout } from "@/components/layout/file-layout";
 import { QuizResults, AnswersReview } from "@/components/quiz";
@@ -9,15 +10,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 
+type Params = Promise<{
+  fileId: string;
+  quizId: string;
+  attemptId: string;
+}>;
+
 interface QuizResultsPageProps {
-  params: {
-    fileId: string;
-    quizId: string;
-    attemptId: string;
-  };
+  params: Params;
 }
 
-export default function QuizResultsPage({ params }: QuizResultsPageProps) {
+export default function QuizResultsPage( props : QuizResultsPageProps) {
+  const params = use(props.params);
+  const { fileId, quizId, attemptId } = params;
   const router = useRouter();
   const { toast } = useToast();
   const {

@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useFileStore } from "@/store/file-store";
 import { Send } from 'lucide-react';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, use } from "react";
 import { useChat } from 'ai/react';
 import { API_BASE_URL } from "@/config";
 
+type Params = Promise<{ fileId: string }>
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+
 interface ChatPageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params;
+  searchParams?: SearchParams;
 }
 
 interface ChatMessage {
@@ -24,19 +26,22 @@ interface ChatMessage {
   category?: 'podcast' | 'flashcard' | 'quiz';
 }
 
-export default function ChatPage({ params }: ChatPageProps) {
+export default function ChatPage({ params, searchParams }: ChatPageProps) {
+  const resolvedParams = use(params);
+  const fileId = resolvedParams.fileId;
+  
   const { selectedFile } = useFileStore();
-  const unwrappedParams = React.use(params);
   
   const [generateOptions, setGenerateOptions] = useState({
     podcast: false,
     flashcard: false,
     quiz: false
   });
+
   const { messages, input, handleInputChange, handleSubmit: handleChatSubmit, isLoading } = useChat({
-    api: `${API_BASE_URL}/api/chat}`,
+    api: `${API_BASE_URL}/api/chat`,
     body: {
-      fileId: unwrappedParams.fileId,
+      fileId,
       ...generateOptions
     },
     onFinish: (message) => {
@@ -46,6 +51,7 @@ export default function ChatPage({ params }: ChatPageProps) {
       console.error('Chat error:', error);
     }
   });
+
   useEffect(() => {
     console.log('Messages updated:', messages);
   }, [messages]);
@@ -82,7 +88,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   }
 
   return (
-    <FileLayout fileId={unwrappedParams.fileId}>
+    <FileLayout fileId={fileId}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -176,4 +182,3 @@ export default function ChatPage({ params }: ChatPageProps) {
     </FileLayout>
   );
 }
-

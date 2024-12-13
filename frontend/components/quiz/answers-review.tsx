@@ -88,7 +88,7 @@ export function AnswersReview({ questions, responses }: AnswersReviewProps) {
                     </CardTitle>
                   </div>
                   <Alert 
-                    variant={response.is_correct ? "success" : "destructive"}
+                    variant={response.is_correct ? "default" : "destructive"}
                     className="w-auto h-auto p-2"
                   >
                     <AlertDescription>

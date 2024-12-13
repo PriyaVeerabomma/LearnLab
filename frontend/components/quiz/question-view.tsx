@@ -82,7 +82,7 @@ export function QuestionView({ question, response, onSubmit, onNext, isLast }: Q
         {hasResponse && (
           <div className="space-y-4">
             <Alert 
-              variant={response.is_correct ? "success" : "destructive"}
+              variant={response.is_correct ? "default" : "destructive"}
               className="flex items-start gap-2"
             >
               <AlertCircle className="h-4 w-4 mt-1" />

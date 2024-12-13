@@ -2,16 +2,15 @@
 
 import { FileLayout } from "@/components/layout/file-layout";
 import { PodcastUploader, PodcastViewer, PodcastInfo, PodcastPlayer, PodcastTranscript } from "@/components/podcast";
-import React from "react";
-
+import {use} from "react";
+type Params = Promise<{ fileId: string }>
 interface PodcastPageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params;
 }
 
 export default function PodcastPage({ params }: PodcastPageProps) {
-  const unwrappedParams = React.use(params);
+  const unwrappedParams = use(params);
+
   return (
     <FileLayout fileId={unwrappedParams.fileId}>
       <div className="space-y-8">
