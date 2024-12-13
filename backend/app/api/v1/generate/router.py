@@ -14,6 +14,8 @@ from ....schemas.quiz import (
     QuizCreate, QuizUpdate, QuizInDB, 
     QuizWithDetails, QuizList
 )
+from ....schemas.file import File, FileCreate, FileResponse
+from ....models.file import File as FileModel
 from urllib.parse import urlparse
 
 from ....schemas.quiz import (
@@ -32,6 +34,7 @@ from app.schemas.generate.models import GenerateRequest, GenerateResponse
 from app.services.podcast_service import AudioService, TranscriptService
 from app.services.quiz_service import QuizService, QuestionService
 from app.services.flashcard_service import FlashcardService, DeckService, CardService
+
 from agents.podcast_agent.learn_lab_assistant_agent import PodcastGenerator
 from app.schemas.quiz.quiz import QuizCreate
 # notification_manager
@@ -57,9 +60,14 @@ async def generate_podcast(
     try:
         # 1. Call podcast generator (this is handled before this function)
         logger.info(f"Starting podcast generation for file {file_id}, query: {query}")
+        file = db.query(FileModel).filter(
+            FileModel.id == file_id,
+            FileModel.user_id == user_id,
+            FileModel.is_deleted == False
+        ).first()
         result = podcast_generator.generate_content(
             question=query,
-            pdf_title="Help.pdf",  # TODO: Get actual filename
+            pdf_title=file.filename,  # TODO: Get actual filename
             output_type="podcast"
         )
 
@@ -182,10 +190,16 @@ async def generate_quiz(file_id: UUID, query: str, db: Session, user_id: UUID):
         quiz_service = QuizService(db)
         question_service = QuestionService(db)
 
+        file = db.query(FileModel).filter(
+            FileModel.id == file_id,
+            FileModel.user_id == user_id,
+            FileModel.is_deleted == False
+        ).first()
+
         # 1. Generate quiz content using PodcastGenerator
         result = podcast_generator.generate_content(
             question=query,
-            pdf_title="Help.pdf",  # TODO: Get actual filename
+            pdf_title=file.filename,
             output_type="quiz"
         )
 
@@ -246,12 +260,16 @@ async def generate_flashcards(
         logger.info(f"Starting flashcard generation for file {file_id}")
         deck_service = DeckService(db)
         card_service = CardService(db)
-
+        file = db.query(FileModel).filter(
+            FileModel.id == file_id,
+            FileModel.user_id == user_id,
+            FileModel.is_deleted == False
+        ).first()
         # 1. Generate flashcard content using PodcastGenerator
         try:
             result = podcast_generator.generate_content(
                 question=query,
-                pdf_title="Help.pdf",  # TODO: Get actual filename
+                pdf_title=file.filename,
                 output_type="flashcards"
             )
 

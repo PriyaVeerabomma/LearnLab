@@ -1,7 +1,7 @@
 'use client';
 
 import { FileLayout } from "@/components/layout/file-layout";
-import { PodcastUploader, PodcastViewer, PodcastInfo, PodcastPlayer, PodcastTranscript } from "@/components/podcast";
+import { PodcastUploader, PodcastViewer, PodcastInfo, PodcastPlayer } from "@/components/podcast";
 import {use} from "react";
 type Params = Promise<{ fileId: string }>
 interface PodcastPageProps {
@@ -44,7 +44,7 @@ export default function PodcastPage({ params }: PodcastPageProps) {
           {/* Right Column - Info and Analytics */}
           <div className="space-y-6">
             {/* <PodcastInfo /> */}
-            <PodcastTranscript />
+            {/* <PodcastTranscript /> */}
           </div>
         </div>
 
