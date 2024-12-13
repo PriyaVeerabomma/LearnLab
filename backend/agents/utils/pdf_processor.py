@@ -36,7 +36,7 @@ class PDFProcessor:
         
         self.index = None
 
-    def create_index(self, index_name: str = "learn-lab-indexing"):
+    def create_index(self, index_name: str = "pdf-semantic-chunking1"):
         """Create and initialize Pinecone index."""
         # Setup serverless specification
         spec = ServerlessSpec(cloud="aws", region="us-east-1")
