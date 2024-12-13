@@ -74,6 +74,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
         
+      # Step 6: Build and push frontend Docker image
       - name: Build and push frontend Docker image
         env:
           DOCKER_FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/learnlab-frontend
