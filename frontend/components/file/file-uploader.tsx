@@ -63,6 +63,7 @@ export function FileUploader() {
         title: "Success",
         description: "File uploaded successfully",
       });
+      router.push(`/dashboard/`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({

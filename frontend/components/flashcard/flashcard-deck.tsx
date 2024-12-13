@@ -9,7 +9,7 @@ import { Deck, DeckProgress } from "@/store/flashcard-store";
 
 interface FlashcardDeckProps {
   deck: Deck;
-  progress?: DeckProgress;
+  progress?: DeckProgress | null;
   onStudy: () => void;
 }
 

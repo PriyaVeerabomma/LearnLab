@@ -52,7 +52,7 @@ async def get_quiz_analytics(
             raise HTTPException(status_code=403, detail="Not authorized to view these analytics")
             
         analytics_service = AnalyticsService(db)
-        analytics = await analytics_service.get_quiz_analytics(quiz_id)
+        analytics = analytics_service.get_quiz_analytics(quiz_id)
         return analytics
         
     except HTTPException as e:

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Music, FileText } from 'lucide-react';
-import { usePodcastStore } from '@/store/podcast-store';
+import { usePodcastStore, Podcast } from '@/store/podcast-store';
 import { useFileStore } from '@/store/file-store';
 import { useRouter } from 'next/navigation';
 import { fetchClient } from '@/lib/api/fetch-client';
@@ -177,7 +177,7 @@ export function PodcastUploader() {
       }
 
       const data = await response.json();
-      setPodcasts((prev) => [...prev, data]);
+      setPodcasts([...usePodcastStore.getState().podcasts, data as Podcast]);
       setProgress(100);
 
       toast({

@@ -9,15 +9,16 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 
+type Params = Promise<{ fileId: string }>
+
 interface FilePageProps {
-  params: {
-    fileId: string;
-  };
+  params: Params;
 }
 
 export default function FilePage({ params }: FilePageProps) {
   // Unwrap the params Promise using React.use()
-  const { fileId } = use(params);
+  const resolvedParams = use(params);
+  const fileId = resolvedParams.fileId;
 
   const router = useRouter();
   const { selectedFile } = useFileStore();

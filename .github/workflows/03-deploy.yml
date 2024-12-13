@@ -29,6 +29,8 @@ env:
   REFRESH_TOKEN_EXPIRE_DAYS: '7'
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY}}
   PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY}}
+  NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
   
 jobs:
   deploy:
@@ -101,6 +103,7 @@ jobs:
           DATABASE_URL="${{ secrets.DATABASE_URL }}"
           DEBUG="${{ secrets.DEBUG }}"
           DOCKER_TOKEN="${{ secrets.DOCKER_TOKEN }}"
+          NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
           DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
           ENVIRONMENT="${{ secrets.ENVIRONMENT }}"
           JWT_ALGORITHM="${{ secrets.JWT_ALGORITHM }}"

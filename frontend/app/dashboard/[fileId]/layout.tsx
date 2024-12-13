@@ -10,10 +10,10 @@ import { use } from 'react';
 
 export default function FileLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
-  params: { fileId: string };
+  params: Promise<{ fileId: string }>;
 }) {
   // Unwrap the `params` promise using React.use()
   const { fileId } = use(params);

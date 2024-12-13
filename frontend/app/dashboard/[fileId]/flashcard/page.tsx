@@ -15,16 +15,18 @@ import { use } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface FlashcardPageProps {
-  params: {
+  params: Promise<{
     fileId: string;
-  };
+  }>;
 }
-
 type StudyState = 'list' | 'study' | 'complete';
 
 export default function FlashcardPage({ params }: FlashcardPageProps) {
   // Unwrap params using React's `use()`
-  const { fileId } = use(params);
+  const unwrappedParams = use(params);
+  const fileId = unwrappedParams.fileId;
+  console.log("-------------")
+  console.log(fileId)
 
   const [studyState, setStudyState] = useState<StudyState>('list');
   const { toast } = useToast();
@@ -284,5 +286,5 @@ export default function FlashcardPage({ params }: FlashcardPageProps) {
     }
   };
 
-  return <FileLayout>{renderContent()}</FileLayout>;
+  return <FileLayout fileId={fileId}>{renderContent()}</FileLayout>;
 }
