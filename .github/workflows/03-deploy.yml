@@ -131,7 +131,7 @@ jobs:
           OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
           PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}"
           PINECONE_INDEX_NAME="${{ secrets.PINECONE_INDEX_NAME }}"
-          GOOGLE_API_CREDENTIALS="${{ secrets.GOOGLE_API_CREDENTIALS }}"
+          GOOGLE_API_CREDENTIALS=${{ secrets.GOOGLE_API_CREDENTIALS }}
           UPSTASH_VECTOR_REST_URL="${{ secrets.UPSTASH_VECTOR_REST_URL }}"
           UPSTASH_VECTOR_REST_TOKEN="${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}"
           GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
