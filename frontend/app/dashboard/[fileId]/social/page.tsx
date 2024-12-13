@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Share2, Twitter, Linkedin } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from "react";
 
 interface SocialPageProps {
   params: {
@@ -15,8 +16,9 @@ interface SocialPageProps {
 }
 
 export default function SocialPage({ params }: SocialPageProps) {
+  const unwrappedParams = React.use(params);
   return (
-    <FileLayout fileId={params.fileId}>
+    <FileLayout fileId={unwrappedParams.fileId}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Share Learning</h1>

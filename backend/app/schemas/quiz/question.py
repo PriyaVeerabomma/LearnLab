@@ -82,14 +82,14 @@ class QuestionInDB(QuestionBase):
         from_attributes = True
 
 class QuestionWithOptions(QuestionInDB):
-    options: List[MultipleChoiceOptionInDB]
+    options: List[MultipleChoiceOptionInDB] = Field(alias='multiple_choice_options')
     concepts: List[QuestionConceptInDB]
 
     class Config:
         from_attributes = True
 
 class QuestionWithAnswer(QuestionInDB):
-    answer: SubjectiveAnswerInDB
+    answer: SubjectiveAnswerInDB = Field(alias='subjective_answer')
     concepts: List[QuestionConceptInDB]
 
     class Config:
