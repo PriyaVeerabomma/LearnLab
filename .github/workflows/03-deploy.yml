@@ -247,7 +247,7 @@ jobs:
           SSH_COMMAND: "ssh -i ~/.ssh/gcp_key -o StrictHostKeyChecking=no ${{ env.GCP_USERNAME }}@${{ env.GCP_HOST }}"
         run: |
           echo "Verifying deployment..."
-          sleep 30  # Wait for services to start
+          sleep 60  # Wait for services to start
           ${{ env.SSH_COMMAND }} "cd ${{ env.DEPLOYMENT_PATH }} && \
             docker-compose -f docker-compose.prod.yml ps && \
             curl -f http://localhost:8000/health || exit 1"
