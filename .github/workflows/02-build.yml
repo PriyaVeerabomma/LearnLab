@@ -54,7 +54,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-docker-${{ github.head_ref }}
+          key: ${{ runner.os }}-docker-
           restore-keys: |
             ${{ runner.os }}-docker-
 
@@ -68,7 +68,7 @@ jobs:
           target: production
           push: true
           tags: |
-            ${{ env.DOCKER_BACKEND_IMAGE }}:latest
+            
             ${{ env.DOCKER_BACKEND_IMAGE }}:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
@@ -84,7 +84,7 @@ jobs:
           target: production
           push: true
           tags: |
-            ${{ env.DOCKER_FRONTEND_IMAGE }}:latest
+            
             ${{ env.DOCKER_FRONTEND_IMAGE }}:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache

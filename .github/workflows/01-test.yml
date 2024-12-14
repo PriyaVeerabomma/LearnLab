@@ -82,9 +82,8 @@ jobs:
 
       # - name: Run tests
       #   run: poetry run pytest tests/ -v
-
   frontend-test:
-    name: Run Frontend Lint
+    name: Run Frontend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -93,7 +92,7 @@ jobs:
     steps:
       - name: Check changes in frontend
         if: ${{ contains(github.event.pull_request.changed_files, 'frontend/') }}
-        run: echo "Changes detected in frontend directory, running frontend lint."
+        run: echo "Changes detected in frontend directory, running frontend tests."
 
       - name: Checkout code
         uses: actions/checkout@v3
