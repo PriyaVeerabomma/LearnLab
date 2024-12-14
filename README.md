@@ -10,11 +10,13 @@
 
 > Enhancing Learning with Fun, Interactive Journeys for Better Comprehension, Revision, and Evaluation.
 
-## 🌟 Quick Links
+## Project URLs
+- Code Labs: [Codelabs Documentation](https://codelabs-preview.appspot.com/?file_id=1uRDRgIq0stv5MiOj-4f0KLE3mzC15eOw9zI4dzttLGg#0)
+- Application: [Front End](http://34.45.163.161:3000/)
+- Swagger: [Swagger](http://34.45.163.161:8000/docs)
+- Airflow: [Airflow](http://34.45.163.161:8080/)
+- Github Tasks: [GitHub Issues and Tasks](https://github.com/orgs/DAMG7245-Big-Data-Sys-SEC-02-Fall24/projects/7/views/1)
 
-- [GitHub Issues and Tasks](https://github.com/orgs/DAMG7245-Big-Data-Sys-SEC-02-Fall24/projects/7/views/1)
-- [Codelabs Documentation](https://codelabs-preview.appspot.com/?file_id=1kMzJ_qRJrDknPFatF1raPvsoJUatl_-tfJuICo7p4EM#0)
-- [Project Submission Video](https://drive.google.com/drive/u/0/folders/1wgYeUY-HsDuWcqGq1hSNVRQ3gvQBMLZC)
 
 ## 👥 Team
 
@@ -22,36 +24,87 @@
 - Uday Kiran Dasari (Project Manager)
 - Venkat Akash Varun Pemmaraju
 
-## 🎯 Overview
+---
 
-In today's digital learning landscape, there's a growing need for tools that can transform static PDF documents into diverse, interactive learning materials. LearnLab addresses this challenge by providing an intelligent platform that converts PDFs into multiple engaging formats, including audio podcasts, flashcards, and quizzes.
+## User Interaction with LearnLab
+1. Upload/Select a PDF.
+2. Query and summarize the document.
+3. Generate audio podcasts for convenient learning.
+4. Create interactive flashcards for revision.
+5. Take quizzes to test understanding.
+6. Generate and share blogs summarizing key points.
 
-## 🚀 Features
+---
 
-- **📱 Interactive Dashboard**
-- User authentication
-- PDF upload and management
-- Learning progress tracking
+## Core Features
 
-- **🎧 Podcast Generation**
-- Automated conversion of academic content
-- Engaging audio narratives
-- Text-to-speech optimization
+### 1. **Podcast Generation**
+- Automated script generation from PDFs.
+- Dramatized and engaging podcasts for enhanced comprehension.
 
-- **📝 Flashcards**
-- AI-powered concept extraction
-- Spaced repetition system
-- Customizable difficulty levels
+### 2. **Interactive Flashcards**
+- AI-powered extraction of key concepts.
+- Categorized by difficulty levels for personalized learning.
 
-- **📊 Interactive Quizzes**
-- Dynamic question generation
-- Real-time feedback
-- Performance analytics
+### 3. **Content Transformation**
+- Platform-specific article generation.
+- Efficient citation and reference management.
 
-- **📝 Content Transformation**
-- Blog post generation
-- Social media integration
-- Citation management
+### 4. **Interactive Quizzes**
+- AI-driven question generation.
+- Instant feedback with detailed explanations.
+
+---
+
+## Project Overview
+
+### Scope
+- PDF processing and storage.
+- Multimodal content generation (audio, textual).
+- Cloud-based architecture with user authentication.
+
+### Stakeholders
+- Students, educators, researchers, professionals, and content creators.
+
+### Problem Statement
+- Inefficient comprehension and retention of dense academic content.
+- LearnLab resolves this with multimodal, engaging learning experiences.
+
+### Accomplishments
+- Reduced podcast generation time by ~50%.
+- Robust quiz and flashcard generation.
+- Time and resource optimization for content creation.
+
+---
+
+## Methodology
+
+### Podcast Generation
+1. **Content Cleaning**: Extract key text using LLMs.
+2. **Transcript Creation**: Generate coherent summaries.
+3. **Dramatization**: Enhance engagement with LLM dramatization.
+4. **Audio Generation**: Convert to audio using TTS tools.
+
+### Flashcard Generation
+1. Extract key concepts from PDF.
+2. Organize into structured flashcards by difficulty.
+
+### Quiz Generation
+- Create interactive MCQs using PDF context and LLMs.
+
+### Blog Generation
+- Summarize PDF insights into blogs.
+- Share directly on Blogger or social media.
+
+---
+
+## Workflow Overview
+1. Audio Podcasts: Learn on the go.
+2. Flashcards: Facilitate structured revision.
+3. Quizzes: Assess retention and comprehension.
+4. Blogs/Social Media: Share insights and collaborate.
+
+---
 
 ## 🛠️ Technology Stack
 
@@ -63,14 +116,16 @@ In today's digital learning landscape, there's a growing need for tools that can
 
 ### Frontend
 - ![Next.js](https://img.shields.io/badge/Next.js-black?style=flat&logo=next.js&logoColor=white)
-- ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat&logo=Streamlit&logoColor=white)
 - ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
+- Vercel AI SDK
 
 ### AI/ML
 - ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)
-- LangChain
-- LlamaIndex
-- Docling
+- LangGraph
+- Gemini Learn LM 1.5
+- PyPDF
+- 11 Labs
+- Pinecone
 
 ### Cloud & DevOps
 - ![GCP](https://img.shields.io/badge/Google_Cloud-4285F4?style=flat&logo=google-cloud&logoColor=white)
@@ -124,13 +179,11 @@ flowchart TD
   P2 --> Q
 ```
 
-## 📋 Project Timeline
+### Agentic architecture
+![Learn Lab Agent](assets/learnlab_agent.png)
+![Architecture](assets/architecture_diagram.png)
+![Agent Architecture](assets/learnlab_Agent_Architecture.jpeg)
 
-- **Phase 1** (Nov 24 - Nov 28): Project setup and infrastructure
-- **Phase 2** (Nov 29 - Dec 3): Core feature development
-- **Phase 3** (Dec 4 - Dec 8): Integration and testing
-- **Phase 4** (Dec 9 - Dec 12): Optimization and refinement
-- **Phase 5** (Dec 13 - Dec 14): Final deployment and documentation
 
 ## 🚀 Getting Started
 
@@ -146,11 +199,11 @@ flowchart TD
 1. **Setup Environment:**
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/DAMG7245-Big-Data-Sys-SEC-02-Fall24/LearnLab
 cd LearnLab
 
 # Initialize environments and configurations
-./setup-env.sh
+# Add all relavent .env files
 ```
 
 2. **Start Services:**
@@ -168,7 +221,6 @@ docker-compose up -d frontend backend
 |-----------|-------|-------------------------|
 | Frontend  | 3000  | http://localhost:3000   |
 | Backend   | 8000  | http://localhost:8000   |
-| Streamlit | 8501  | http://localhost:8501   |
 | Airflow   | 8080  | http://localhost:8080   |
 | Database  | 5432  | postgres://localhost:5432|
 
@@ -209,41 +261,10 @@ docker-compose down -v
 LearnLab/
 ├── frontend/          # Next.js frontend
 ├── backend/          # FastAPI backend
-├── streamlit-ui/     # Streamlit analytics
 ├── airflow/          # Airflow DAGs
 ├── docker/           # Docker configurations
 └── docker-compose.yml
 ```
-
-## Technology Stack
-
-### Core Services
-- **Frontend**: Next.js 15.0.3, TypeScript, TailwindCSS
-- **Backend**: FastAPI, SQLAlchemy, Poetry
-- **Analytics**: Streamlit, Plotly, Pandas
-- **Pipeline**: Apache Airflow 2.7.3
-- **Database**: PostgreSQL 15
-
-### Infrastructure
-- Docker & Docker Compose
-- Python 3.9.6
-- Node.js 18
-- Poetry for Python dependency management
-
-## Development State
-
-### Completed
-- Base service setup with Docker
-- Inter-service communication
-- Database initialization
-- Hot-reload development setup
-- Health checks implementation
-
-### In Progress
-- API development
-- Frontend components
-- Data pipeline implementation
-- Analytics dashboard
 
 ## Environment Setup
 Each service requires its own `.env` file. Copy from `.env.example`:
@@ -253,11 +274,7 @@ cd <service-directory>
 cp .env.example .env
 ```
 
-For detailed service-specific documentation, refer to each service's README:
-- [Frontend Documentation](frontend/README.md)
-- [Backend Documentation](backend/README.md)
-- [Streamlit UI Documentation](streamlit-ui/README.md)
-- [Airflow Documentation](airflow/README.md)
+
 
 
 
