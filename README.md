@@ -16,6 +16,7 @@
 - Swagger: [Swagger](http://34.45.163.161:8000/docs)
 - Airflow: [Airflow](http://34.45.163.161:8080/)
 - Github Tasks: [GitHub Issues and Tasks](https://github.com/orgs/DAMG7245-Big-Data-Sys-SEC-02-Fall24/projects/7/views/1)
+- Project Demo: [Drive Link](https://drive.google.com/drive/u/1/folders/1wgYeUY-HsDuWcqGq1hSNVRQ3gvQBMLZC)
 
 
 ## 👥 Team
