@@ -10,7 +10,7 @@ class PodcastCache:
         self.cache = SemanticCache(
             url=os.getenv("UPSTASH_VECTOR_REST_URL"),
             token=os.getenv("UPSTASH_VECTOR_REST_TOKEN"),
-            min_proximity=0.92  # Adjust similarity threshold as needed
+            min_proximity=0.97  # Adjust similarity threshold as needed
         )
 
     def generate_cache_key(self, query: str, pdf_title: str) -> str:

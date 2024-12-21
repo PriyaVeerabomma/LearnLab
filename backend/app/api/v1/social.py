@@ -1,17 +1,22 @@
 # app/api/v1/social.py
 
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from ...schemas.social_schema import MarkdownContent, TwitterResponse, BloggerResponse, BlogContent
 from ...services.social_service import SocialMediaService
 from ...core.deps import get_current_user
-router = APIRouter()
 from pydantic import BaseModel
 from agents.utils.blog_agent import BlogAgent
 from agents.utils.tweet_agent import TweetAgent
 from agents.podcast_agent.learn_lab_assistant_agent import PodcastGenerator
 import traceback
 import os
+from ...core.deps import get_db
+from ...models.file import File as FileModel
+from ...models.user import User
+from uuid import UUID
 
+router = APIRouter()
 generator = PodcastGenerator()
 
 class ContentRequest(BaseModel):
@@ -60,14 +65,26 @@ async def post_blog(
 
 
 @router.post("/generate/blog")
-async def generate_blog(content_request: ContentRequest, current_user = Depends(get_current_user)):
+async def generate_blog(
+    content_request: ContentRequest, 
+    current_user: User= Depends(get_current_user),
+    db : Session = Depends(get_db)):
     try:
         print(f"DEBUG: Generating blog for query: {content_request.query}")
         print(f"DEBUG: PDF Title: {content_request.pdf_title}")
         
+        file = db.query(FileModel).filter(
+            FileModel.id == content_request.pdf_title,
+            FileModel.user_id == current_user.id,
+            FileModel.is_deleted == False
+        ).first()
+        pdf_title = file.filename.rsplit('.', 1)[0]
+        print(f"DEBUG File:{pdf_title}")
+        print(f"DEBUG File:{file.id}")
+
         result = generator.generate_content(
             question=content_request.query,
-            pdf_title=content_request.pdf_title,
+            pdf_title=pdf_title,
             output_type="blog"
         )
         
@@ -79,14 +96,25 @@ async def generate_blog(content_request: ContentRequest, current_user = Depends(
         print(f"ERROR Details: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 @router.post("/generate/tweet")
-async def generate_tweet(content_request: ContentRequest, current_user = Depends(get_current_user)):
+async def generate_tweet(
+    content_request: ContentRequest, 
+    current_user: User= Depends(get_current_user),
+    db : Session = Depends(get_db)):
     try:
         print(f"DEBUG: Generating tweet for query: {content_request.query}")
         print(f"DEBUG: PDF Title: {content_request.pdf_title}")
         
+        file = db.query(FileModel).filter(
+            FileModel.id == content_request.pdf_title,
+            FileModel.user_id == current_user.id,
+            FileModel.is_deleted == False
+        ).first()
+        pdf_title = file.filename.rsplit('.', 1)[0]
+        print(f"DEBUG File:{pdf_title}")
+        print(f"DEBUG File:{file.id}")
         result = generator.generate_content(
             question=content_request.query,
-            pdf_title=content_request.pdf_title,
+            pdf_title=pdf_title,
             output_type="tweet"
         )
         

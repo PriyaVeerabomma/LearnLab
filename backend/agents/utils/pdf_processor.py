@@ -24,6 +24,7 @@ class PDFProcessor:
         logger.setLevel("WARNING")
         
         self.pc = Pinecone(api_key=pinecone_api_key)
+        print(f"DEBUG: {len(self.encoder(["test"])[0])}")
         self.dims = len(self.encoder(["test"])[0])
         
         self.splitter = RollingWindowSplitter(
@@ -59,13 +60,15 @@ class PDFProcessor:
             )
             # Wait for index to be initialized
             while not self.pc.describe_index(index_name).status['ready']:
-                time.sleep(1)
+                time.sleep(5)
             
             # Connect to index
             self.index = self.pc.Index(index_name)
+
             logger.info(f"Created and initialized new index: {index_name}")
         
-        time.sleep(1)  # Small delay to ensure connection is established
+        time.sleep(5)  # Small delay to ensure connection is established
+        print(f"DEBUG: Pinecone index connected with {self.dims} dimensions")
         return self.index.describe_index_stats()
         # """Create and initialize Pinecone index."""
         # # Setup serverless specification
@@ -252,7 +255,8 @@ class PDFProcessor:
     
         # Create query embedding
         xq = self.encoder([text])[0]
-        
+        print(f"DEBUG in QUERY: {self.index.describe_index_stats()}")
+        print(f"DEBUG in QUERY: {pdf_title}")
         # Prepare filter if pdf_title is specified
         filter_dict = {"title": pdf_title}
         
@@ -290,7 +294,7 @@ class PDFProcessor:
             chunk = f"# {title}\n\n{context if context else content}"
             chunks.append(chunk)
 
-        print(f"Query Results for '{pdf_title}':")
+        print(f"Query Results for '{pdf_title}'")
         print(f"Number of Matches: {len(chunks)}")
             
         return chunks

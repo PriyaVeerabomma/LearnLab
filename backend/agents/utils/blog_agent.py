@@ -32,19 +32,25 @@ class BlogAgent:
             BlogContent: A Pydantic model containing the title and body of the blog.
         """
         prompt_template = """
-        Write a technical blog based on the following topic and research context:
+        You are an experienced content writer. Using the research context and topic provided below, craft a clear, well-structured blog post of approximately 800-1200 words. Focus on informative yet engaging storytelling and incorporate specific examples from the context.
 
         Topic: {query}
-
-        Research Context:
+        Research Context: 
         Answer: {answer}
-        Evidence: {evidence}
+        Evidence:{evidence}
 
         Guidelines:
-        1. Provide a concise, engaging title.
-        2. Write a well-structured body with an introduction, main content, and conclusion.
-        3. Use a technical tone and ensure factual accuracy based on the context.
+        1. **Introduction**: Provide a hook that draws readers in. Summarize the context or background in an accessible way.
+        2. **Key Points**: Highlight at least three important insights or data points from the research context, explaining them thoroughly and relating them to real-world applications or implications.
+        3. **Analysis & Commentary**: Offer an in-depth explanation or interpretation of these insights, including any potential controversies, limitations, or future directions.
+        4. **Practical Takeaways**: Present actionable advice or key lessons for readers to apply in their own lives, work, or thought processes.
+        5. **Conclusion**: Wrap up the discussion with a concise takeaway or call-to-action, emphasizing the broader importance of the topic.
+
+        Make your language compelling, informative, and easy to follow. Strive for a casual yet professional tone to keep readers engaged. Refer only to the data provided in the research context, avoiding speculation or unrelated details. The final output should be a polished, publication-ready blog post.
+
+        Return the final blog text only, without extra commentary or headings beyond what is stated in the prompt.
         """
+
         # Format the evidence as a single string
         formatted_evidence = " ".join(rag_context.get("evidence", []))
         

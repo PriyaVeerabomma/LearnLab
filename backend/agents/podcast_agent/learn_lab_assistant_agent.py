@@ -64,58 +64,73 @@ class IntegratedContentGenerator:
 
 def route_by_output_type(state: EnhancedGraphState) -> str:
     return state.output_type
-
-TOPIC_EXPANSION_PROMPT = """You are an expert podcast planner. Create a detailed outline for a 3-5 minute 
-podcast discussion between two speakers using the provided research context.
+TOPIC_EXPANSION_PROMPT = """
+You are an expert podcast planner. 
+Using the provided research context and the current conversation, create a structured, in-depth outline for a 3-5 minute podcast discussion between two speakers. 
+Focus on crafting a logical flow that eases the audience into the topic, breaks down complex findings, and references specific examples from the context. 
+Also ensure the outline highlights the most impactful insights and potential implications for the audience.
 
 Topic: {topic}
 
 Research Context:
 {rag_context}
 
-Focus on:
-1. Breaking down complex concepts from the research
-2. Including specific examples from the provided context
-3. Natural conversation flow
-4. Key insights and their implications
-
 Current conversation: {messages}
+
+In your outline, be sure to:
+1. Introduce the topic and provide any necessary background.
+2. Break down at least three key points from the research context.
+3. Incorporate natural transitions between segments to maintain a smooth conversational flow.
+4. Clearly identify questions or prompts for Speaker 1.
+5. Include thorough talking points and clarifications for Speaker 2 to explain complex concepts.
+6. Conclude with the main takeaways and potential implications or next steps.
 """
 
-SCRIPT_GENERATION_PROMPT = """You are a professional podcast script writer. Create a natural conversation 
-between two speakers based on the research context and outline provided.
+
+SCRIPT_GENERATION_PROMPT = """
+You are a professional podcast script writer. Create a natural 3-5 minute conversation between two personalities:
+
+- Speaker 1: the curious host who asks questions and seeks clarification
+- Speaker 2: the expert who explains the research findings
 
 Research Context:
 {rag_context}
 
-Guidelines:
-- Speaker 1 is the host asks insightful questions and seeks clarification
-- Speaker 2 asks is who explains the research findings
-- Include natural elements like "umm", "hmm" for Speaker 2
-- Don't Add [laughs], [sighs] for emotional moments
-- Reference specific findings from the research
-- Keep the tone conversational yet informative
-- Ensure the script runs 3-5 minutes when read aloud
-- Ensure natural flow between segments
-- Keep the retrieved content accurate while making it engaging
+Outline:
+{outline}
 
-Keep it as Speaker 1 and Speaker 2 only because don't add any names to it because I will parsing the script to make it work as 2 different Audios
+Instructions:
+1. Use the outline and the research context accurately.
+2. Include specific findings from the research with a clear, conversational tone.
+3. Speaker 1 should pose insightful questions that guide the discussion.
+4. Speaker 2 should respond with clear explanations, using natural filler words like "umm" and "hmm."
+5. Ensure the entire script runs 3-5 minutes when read aloud.
+6. Maintain a smooth, logical flow between segments, referencing the previously provided outline.
+7. Keep it strictly between Speaker 1 and Speaker 2, with no additional speakers or names.
+8. Don't refer to the speaker roles in the script.
 
-Previous messages: {messages}
-Outline: {outline}
+Return the script in this format:
+
+Speaker 1: (dialogue)
+Speaker 2: (dialogue)
+
+Just focus on clarity, engagement, and accuracy.
 """
+REFINE_SCRIPT_PROMPT = """
+You are a script editor. Refine the existing research-based podcast script for clarity, pacing, and engagement, while preserving its structure and content accuracy.
 
-REFINE_SCRIPT_PROMPT = """Refine this research-based podcast script while maintaining its structure:
-1. Keep the Speaker 1: and Speaker 2: format
-2. Add appropriate pauses and emphasis
-3. Ensure natural flow between segments
-4. Maintain all expression markers like [laughs], [sighs]
-5. Keep the research content accurate while making it engaging
+Instructions:
+1. Retain the exact Speaker 1: and Speaker 2: format throughout.
+2. Insert natural pauses (e.g., "...") and subtle emphasis where needed.
+3. Ensure a smooth narrative flow between segments, without adding or removing major content.
+4. Maintain all expression markers ([laughs], [sighs]) and consider adding them where they enhance authenticity.
+5. Keep the research content intact and accurate.
 
 Current script:
 {script}
 
-Return the enhanced script only, maintaining the exact same format."""
+Return only the enhanced script in the same format, applying all improvements.
+"""
 
 class PodcastGenerator:
     def __init__(self):
@@ -428,7 +443,7 @@ class PodcastGenerator:
             
             try:
                 final_state = graph.invoke(initial_state)
-                
+                # print(f"DEBUG: Final State: {final_state}")
                 if final_state.get("flashcards") is None:
                     raise ValueError("No flashcards were generated")
                     

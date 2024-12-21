@@ -34,7 +34,9 @@ class S3Storage:
             s3_key = f"podcast/{safe_pdf_title}/{safe_podcast_title}_{timestamp}.mp3"
             
             # Upload the file
-            self.s3_client.upload_file(file_path, self.bucket_name, s3_key)
+            extra_args = {}
+            extra_args['ContentType'] = 'audio/mpeg'
+            self.s3_client.upload_file(file_path, self.bucket_name, s3_key, ExtraArgs=extra_args)
             
             # Generate the S3 URL
             url = f"https://{self.bucket_name}.s3.amazonaws.com/{s3_key}"
