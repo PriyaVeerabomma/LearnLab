@@ -38,7 +38,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'}/ws?token=${token}`;
+    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}/ws?token=${token}`;
+    console.log(process.env.NEXT_PUBLIC_WS_URL)
+
     console.log('Connecting to WebSocket...');
     
     globalWs = new WebSocket(wsUrl);
@@ -66,7 +68,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           toast({
             title: data.title,
             description: data.message,
-            variant: "default",
+            variant: data["variant"]|| "default",
             duration: data.duration || 5000
           });
         }

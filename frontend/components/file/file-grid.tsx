@@ -90,13 +90,33 @@ export function FileGrid() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+  type VarientType = "default" | "destructive" | "primary" | "secondary" | "accent" | "warning" | "success" | "ghost" | "outline" | null | undefined
+  // Array of card variants from our design system
+  const cardVariants:VarientType[] = [
+    'primary',
+    'secondary',
+    'accent',
+    'warning',
+    'success'
+  ];
+
+  if (files.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-lg text-muted-foreground">
+          Upload PDFs to explore interactive and fun learning modes
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {files.map((file) => (
+      {files.map((file, index) => (
         <Card 
           key={file.id} 
-          className="hover:shadow-md transition-shadow cursor-pointer"
+          className="hover:shadow-md transition-shadow cursor-pointer border border-black"
+          variant={cardVariants[index % cardVariants.length]}
           onClick={() => handleCardClick(file)}
         >
           <CardHeader>
@@ -125,7 +145,7 @@ export function FileGrid() {
               Download
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();

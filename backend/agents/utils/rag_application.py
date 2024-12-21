@@ -186,6 +186,6 @@ def main():
                 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-
+rag = RAGApplication()
 if __name__ == "__main__":
     main()

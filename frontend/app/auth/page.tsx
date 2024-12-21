@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/login-form';
 import { RegisterForm } from '@/components/auth/register-form';
 import { Suspense } from 'react';
+import { Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function AuthContent() {
   const searchParams = useSearchParams();
@@ -16,48 +18,76 @@ function AuthContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
-      <div className="container-base min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-md space-y-8">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h1 className="heading-section text-accent">
-              Welcome to LearnLab
-            </h1>
-            <p className="text-body">
-              {tab === 'login' 
-                ? 'Sign in to continue to your account' 
-                : 'Create an account to get started'}
-            </p>
-          </div>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-accent/5" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-border" />
+      </div>
 
-          {/* Auth Card */}
-          <div className="card-base shadow-lg p-responsive">
-            <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger 
-                  value="login"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  Login
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="register"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  Register
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login" className="mt-0">
-                <LoginForm />
-              </TabsContent>
-              
-              <TabsContent value="register" className="mt-0">
-                <RegisterForm />
-              </TabsContent>
-            </Tabs>
-          </div>
+      <div className="container-base min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Logo & Header */}
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center justify-center gap-2 mb-4">
+                <Sparkles className="h-6 w-6 text-accent" />
+                <span className="text-2xl font-bold">LearnLab</span>
+              </div>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {tab === 'login' ? 'Welcome back' : 'Create your account'}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {tab === 'login' 
+                  ? 'Sign in to continue to your dashboard' 
+                  : 'Start your learning journey today'}
+              </p>
+            </div>
+
+            {/* Auth Card */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="card-base border-2"
+            >
+              <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger value="register">
+                    Sign Up
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="p-6 pt-2">
+                  <TabsContent value="login" className="mt-0">
+                    <LoginForm />
+                  </TabsContent>
+                  
+                  <TabsContent value="register" className="mt-0">
+                    <RegisterForm />
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </motion.div>
+
+            {/* Additional Links */}
+            <div className="text-center text-sm">
+              <button 
+                onClick={() => router.push('/')}
+                className="text-muted-foreground hover:text-accent transition-colors"
+              >
+                ← Back to home
+              </button>
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

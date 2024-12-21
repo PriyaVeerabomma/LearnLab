@@ -44,6 +44,15 @@ async def process_pdf_embeddings(file_path: str, file_id: UUID, user_id: UUID):
     """
     try:
         logger.info(f"Starting PDF processing for file_id: {file_id}")
+        await notification_manager.send_notification(
+                    user_id,
+                    {
+                        "type": "notification",
+                        "title": "PDF Processing Started",
+                        "message": f"PDF processing started for file_id: {file_id}",
+                        "variant": "info",
+                        "duration": 5000
+        })
         
         # Verify file exists
         if not os.path.exists(file_path):
@@ -78,13 +87,14 @@ async def process_pdf_embeddings(file_path: str, file_id: UUID, user_id: UUID):
         
         # Send notification for successful embedding generation
         await notification_manager.send_notification(
-            user_id,
-            {
-                "type": "success",
-                "message": "PDF successfully converted to embeddings",
-                "file_id": str(file_id),
-                "status": "processing"
-            }
+                    user_id,
+                    {
+                        "type": "notification",
+                        "title": "PDF Processed and Indexed",
+                        "message": f"PDF successfully processed and indexed chunks",
+                        "variant": "success",
+                        "duration": 5000
+                    }
         )
         
         # Index the document
@@ -194,7 +204,7 @@ async def upload_file(
     
     try:
         # Create a unique temporary file in the dedicated directory
-        temp_file_path = os.path.join(TEMP_DIR, f"upload_{time.time()}_{file.filename}")
+        temp_file_path = os.path.join(TEMP_DIR, f"{file.filename}")
         
         # Save uploaded file to temporary location
         with open(temp_file_path, "wb") as temp_file:

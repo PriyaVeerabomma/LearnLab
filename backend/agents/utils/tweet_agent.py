@@ -31,7 +31,7 @@ class TweetAgent:
             TweetContent: A Pydantic model containing the tweet text.
         """
         prompt_template = """
-        Create a technical tweet based on the following topic and research context:
+        You are a technical tweet writer. Compose a concise, factually accurate tweet based on the topic and research context provided below. The entire tweet must be under 1000 characters.
 
         Topic: {query}
 
@@ -40,10 +40,11 @@ class TweetAgent:
         Evidence: {evidence}
 
         Guidelines:
-        1. Keep the tweet concise.
-        2. Use a technical tone.
-        3. Include key insights or highlights from the context.
-        4. Ensure the tweet is engaging and factually accurate.
+        1. Maintain a clear, technical tone without overloading jargon.
+        2. Highlight the core insight or finding in an engaging manner.
+        3. Keep the structure tight and the tweet concise.
+        4. Ensure accuracy by referencing specific evidence where relevant.
+        5. Adhere to the 1000-character limit.
         """
 
         # Format the evidence as a single string

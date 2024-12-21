@@ -74,7 +74,7 @@ interface PodcastStore {
   setPodcasts: (podcasts: Podcast[]) => void;
   
   // API integration helpers
-  fetchPodcasts: () => Promise<void>;
+  fetchPodcasts: (file_id: string) => Promise<void>;
   updatePodcastProgress: (
     podcastId: UUID,
     position: number,
@@ -117,9 +117,9 @@ export const usePodcastStore = create<PodcastStore>((set, get) => ({
   setPodcasts: (podcasts) => set({ podcasts }),
 
   // API integration
-  fetchPodcasts: async () => {
+  fetchPodcasts: async (file_id) => {
     try {
-      const response = await fetchClient(`${API_ROUTES.podcasts.base}`);
+      const response = await fetchClient(`${API_ROUTES.podcasts}`);
       if (!response.ok) throw new Error('Failed to fetch podcasts');
       const data = await response.json();
       set({ podcasts: data });

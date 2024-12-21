@@ -15,6 +15,16 @@ interface QuizListProps {
 }
 
 export function QuizList({ quizzes, isLoading, onSelectQuiz }: QuizListProps) {
+  // Array of card variants from our design system
+  type VarientType = "default" | "destructive" | "primary" | "secondary" | "accent" | "warning" | "success" | "ghost" | "outline" | null | undefined
+  const cardVariants: VarientType[] = [
+    'primary',
+    'secondary',
+    'accent',
+    'warning',
+    'success'
+  ];
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -46,10 +56,11 @@ export function QuizList({ quizzes, isLoading, onSelectQuiz }: QuizListProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {quizzes.map((quiz) => (
+      {quizzes.map((quiz, index) => (
         <Card 
           key={quiz.id}
           className="hover:shadow-md transition-shadow"
+          variant={cardVariants[index % cardVariants.length]}
         >
           <CardHeader>
             <CardTitle className="flex justify-between items-start">
