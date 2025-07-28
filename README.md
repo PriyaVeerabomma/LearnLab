@@ -16,14 +16,6 @@
 - Swagger: [Swagger](http://34.45.163.161:8000/docs)
 - Airflow: [Airflow](http://34.45.163.161:8080/)
 - Github Tasks: [GitHub Issues and Tasks](https://github.com/orgs/DAMG7245-Big-Data-Sys-SEC-02-Fall24/projects/7/views/1)
-
-
-## 👥 Team
-
-- Sai Surya Madhav Rebbapragada
-- Uday Kiran Dasari (Project Manager)
-- Venkat Akash Varun Pemmaraju
-
 ---
 
 ## User Interaction with LearnLab
